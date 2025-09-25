@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+<meta charset="UTF-8">
+<title>პარამეტრები</title>
+<style>
+body {
+  margin:0; padding:0;
+  font-family:"Myriad Pro","Segoe UI",Arial,sans-serif;
+  display:flex;
+  background:#f4f6f9; color:#282828;
+}
+/* Sidebar */
+.sidebar {
+  width:200px;
+  background:#282828;
+  color:white;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+.sidebar img {
+  width:100px;
+  margin:20px 0;
+  border-radius:8px;
+}
+.sidebar a {
+  color:white;
+  text-decoration:none;
+  padding:12px 16px;
+  font-size:14px;
+  width:100%;
+  display:block;
+  text-align:left;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+  transition:background .2s;
+}
+.sidebar a:hover { background:rgba(255,255,255,0.12); }
+.sidebar a.active { background:rgba(255,255,255,0.25); }
+
+/* Content wrapper */
+.content {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+}
+
+/* Top Banner */
+.topbar {
+  background:#282828;
+  color:white;
+  padding:14px 20px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.topbar .title {
+  font-size:18px;
+  font-weight:bold;
+}
+.topbar .badges {
+  display:flex;
+  gap:12px;
+}
+.topbar .badge {
+  background:rgba(255,255,255,0.12);
+  border:1px solid rgba(255,255,255,0.35);
+  padding:6px 10px;
+  border-radius:8px;
+  font-size:13px;
+}
+
+.container { width:95%; max-width:1100px; margin:24px auto; }
+.card { background:white; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1); padding:20px; margin-bottom:18px; }
+.card h2 { margin:0 0 15px 0; font-size:18px; color:#282828; font-weight:bold; }
+
+/* Table */
+table { width:100%; border-collapse:collapse; margin-top:10px; }
+th, td { padding:10px; border-bottom:1px solid #eee; text-align:left; font-size:14px; }
+th { background:#f7f7f7; font-weight:600; color:#333; }
+tr:hover { background:#fafafa; }
+
+/* Buttons */
+.btn {
+  padding:10px 18px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:14px;
+}
+.btn-add {
+  background:#282828;
+  color:white;
+  font-weight:bold;
+}
+.btn-add:hover { background:#1f1f1f; }
+.btn-small { padding:6px 10px; font-size:13px; border-radius:5px; }
+.btn-edit { background:#b58900; color:white; }
+.btn-delete { background:#b00020; color:white; }
+.btn-toggle { background:#555; color:white; }
+.btn-small:hover { filter:brightness(0.9); }
+
+/* Modal */
+.modal { display:none; position:fixed; z-index:999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); }
+.modal-content { background:white; margin:5% auto; padding:24px; border-radius:10px; width:500px; max-width:92%; position:relative; box-shadow:0 5px 15px rgba(0,0,0,0.3);}
+.modal-content h3 { text-align:center; margin-top:0; color:#282828;}
+.modal-content label { display:block; margin-top:12px; font-weight:600; color:#333; }
+.modal-content input, .modal-content select { width:100%; padding:10px; margin-top:6px; margin-bottom:6px; border-radius:6px; border:1px solid #ccc; color:#282828; box-sizing:border-box; }
+.modal-content button { margin-top:16px; width:100%; padding:12px; background:#282828; color:white; border:none; border-radius:8px; }
+.close { position:absolute; right:15px; top:10px; font-size:22px; font-weight:bold; color:#333; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <img src="SANSO.jpg" alt="Sanso Logo">
+  <a href="main.html" id="mainLink">🏠 მთავარი გვერდი</a>
+  <a href="stats.html" id="statsLink">📊 სტატისტიკა</a>
+  <a href="settings.html" id="settingsLink" class="active">⚙️ პარამეტრები</a>
+  <a href="#" onclick="logout()">🚪 გასვლა</a>
+</div>
+
+<!-- Content -->
+<div class="content">
+  <div class="topbar">
+    <div class="title">Sanso Technical Department</div>
+    <div class="badges">
+      <div class="badge">აქტიური მომხმარებლები: <strong id="userCount">0</strong></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <h2>მომხმარებლების მართვა</h2>
+      <div style="margin:10px 0;">
+        <button class="btn btn-add" onclick="openAddUserModal()">+ ახალი მომხმარებელი</button>
+      </div>
+      <table id="userTable">
+        <thead>
+          <tr>
+            <th>სახელი და გვარი</th>
+            <th>მომხმარებელი</th>
+            <th>ელფოსტა</th>
+            <th>როლი</th>
+            <th>პაროლი</th>
+            <th>სტატუსი</th>
+            <th>ქმედება</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>აქტივობის ისტორია</h2>
+      <table id="logTable">
+        <thead><tr><th>მომხმარებელი</th><th>ქმედება</th><th>დრო</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit User Modal -->
+<div id="userModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeUserModal()">&times;</span>
+    <h3 id="modalTitle">ახალი მომხმარებელი</h3>
+    <label>სახელი და გვარი:</label>
+    <input type="text" id="fullName">
+    <label>მომხმარებელი:</label>
+    <input type="text" id="username">
+    <label>ელფოსტა:</label>
+    <input type="email" id="email">
+    <label>პაროლი:</label>
+    <input type="text" id="password">
+    <label>როლი:</label>
+    <select id="role">
+      <option>Admin</option>
+      <option>Technician</option>
+      <option>Viewer</option>
+    </select>
+    <button onclick="saveUser()">შენახვა</button>
+  </div>
+</div>
+
+<script>
+/* Role helpers */
+function getRole(){
+  const cu = JSON.parse(localStorage.getItem("currentUser")||"null");
+  return cu?.role || "Viewer";
+}
+function isAdmin(){ return getRole()==="Admin"; }
+function isTech(){ return getRole()==="Technician"; }
+function isViewer(){ return getRole()==="Viewer"; }
+
+function updateUIByRole(){
+  const statsLink = document.getElementById("statsLink");
+  const settingsLink = document.getElementById("settingsLink");
+  const mainLink = document.getElementById("mainLink");
+
+  if (isTech()) {
+    statsLink.style.display = "none";
+    settingsLink.style.display = "none";
+  } else if (isViewer()) {
+    statsLink.style.display = "block";
+    settingsLink.style.display = "none";
+  } else if (isAdmin()) {
+    statsLink.style.display = "block";
+    settingsLink.style.display = "block";
+    mainLink.style.display = "block";
+  }
+}
+updateUIByRole();
+
+/* Users + Logs */
+let appUsers = JSON.parse(localStorage.getItem("appUsers")||"[]");
+let appLogs = JSON.parse(localStorage.getItem("appLogs")||"[]");
+
+function renderUsers(){
+  const tbody = document.getElementById("userTable").tBodies[0];
+  tbody.innerHTML="";
+  appUsers.forEach((u,i)=>{
+    const tr=document.createElement("tr");
+    const maskedPass = "•".repeat(u.password.length);
+    tr.innerHTML=`
+      <td>${u.fullName||""}</td>
+      <td>${u.username}</td>
+      <td>${u.email||""}</td>
+      <td>${u.role}</td>
+      <td>${maskedPass}</td>
+      <td>${u.disabled?"გათიშული":"აქტიური"}</td>
+      <td>
+        <button class="btn-small btn-edit" onclick="editUser(${i})">✏️</button>
+        <button class="btn-small btn-toggle" onclick="toggleUser(${i})">${u.disabled?"აქტივაცია":"დეაქტივაცია"}</button>
+        <button class="btn-small btn-delete" onclick="deleteUser(${i})">🗑️</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+  document.getElementById("userCount").textContent=appUsers.filter(u=>!u.disabled).length;
+}
+
+function renderLogs(){
+  const tbody=document.getElementById("logTable").tBodies[0];
+  tbody.innerHTML="";
+  appLogs.forEach(l=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${l.user}</td><td>${l.action}</td><td>${l.time}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function openAddUserModal(){
+  editingIndex=null;
+  document.getElementById("modalTitle").innerText="ახალი მომხმარებელი";
+  document.getElementById("fullName").value="";
+  document.getElementById("username").value="";
+  document.getElementById("email").value="";
+  document.getElementById("password").value="";
+  document.getElementById("role").value="Viewer";
+  document.getElementById("userModal").style.display="block";
+}
+function closeUserModal(){ document.getElementById("userModal").style.display="none"; }
+
+let editingIndex=null;
+function editUser(i){
+  editingIndex=i;
+  const u=appUsers[i];
+  document.getElementById("modalTitle").innerText="მომხმარებლის რედაქტირება";
+  document.getElementById("fullName").value=u.fullName||"";
+  document.getElementById("username").value=u.username;
+  document.getElementById("email").value=u.email||"";
+  document.getElementById("password").value=u.password; // სრული ტექსტი
+  document.getElementById("role").value=u.role;
+  document.getElementById("userModal").style.display="block";
+}
+function saveUser(){
+  const fn=document.getElementById("fullName").value.trim();
+  const u=document.getElementById("username").value.trim();
+  const e=document.getElementById("email").value.trim();
+  const p=document.getElementById("password").value.trim();
+  const r=document.getElementById("role").value;
+  if(!fn||!u||!e||!p){ alert("აუცილებელია ყველა ველი"); return; }
+  const userData={fullName:fn,username:u,email:e,password:p,role:r,disabled:false};
+  if(editingIndex!==null){ appUsers[editingIndex]=userData; }
+  else { appUsers.push(userData); }
+  localStorage.setItem("appUsers",JSON.stringify(appUsers));
+  closeUserModal(); renderUsers();
+}
+function toggleUser(i){
+  appUsers[i].disabled=!appUsers[i].disabled;
+  localStorage.setItem("appUsers",JSON.stringify(appUsers));
+  renderUsers();
+}
+function deleteUser(i){
+  if(confirm("წაშლა?")){
+    appUsers.splice(i,1);
+    localStorage.setItem("appUsers",JSON.stringify(appUsers));
+    renderUsers();
+  }
+}
+
+renderUsers(); renderLogs();
+
+/* Logout with logging */
+function logout(){
+  const cu = JSON.parse(localStorage.getItem("currentUser"));
+  if(cu){
+    const logs=JSON.parse(localStorage.getItem("appLogs")||"[]");
+    logs.unshift({ user:cu.username, action:"Logout", time:new Date().toLocaleString("ka-GE") });
+    localStorage.setItem("appLogs",JSON.stringify(logs));
+  }
+  localStorage.removeItem("currentUser");
+  window.location.href="login.html";
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+<meta charset="UTF-8">
+<title>შესვლა — Sanso Technical Department</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --bg:#f4f6f9;
+  --surface:#ffffff;
+  --ink:#282828;
+  --primary:#282828;
+  --primary-700:#1f1f1f;
+  --ring: rgba(40,40,40,.18);
+  --r:16px;
+  --shadow-lg: 0 18px 40px rgba(15,23,42,.12);
+  --shadow-sm: 0 1px 2px rgba(15,23,42,.06);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%; margin:0; padding:0;}
+body{
+  /* შუა background — ატვირთული ფოტო */
+  background: #e9eef4 url('Login Background.png') center/cover no-repeat fixed;
+  color:var(--ink);
+  font-family:"Myriad Pro","Segoe UI", Roboto, Arial, sans-serif;
+  display:flex; flex-direction:column; min-height:100vh;
+}
+
+/* ===== Main area to center the card ===== */
+.main{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:30px 10px;
+}
+
+/* Card */
+.card{
+  width:min(440px, 92vw);
+  background:var(--surface);
+  border-radius:var(--r);
+  box-shadow:var(--shadow-lg);
+  position:relative;
+  overflow:hidden;
+}
+
+/* Header */
+.card-head{
+  background:#282828;
+  color:#fff;
+  padding:12px 20px 20px;
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+.card-head img{
+  width:80px; height:80px; object-fit:contain;
+}
+.card-title{
+  font-size:20px;
+  font-weight:bold;
+}
+
+/* Body */
+.card-body{
+  margin-top:-10px;
+  background:#fff;
+  border-top-left-radius:20px; border-top-right-radius:20px;
+  padding:20px 18px 18px;
+}
+label{ font-weight:600; color:#333; display:block; margin-top:10px; }
+.input-wrap{ position:relative; margin-top:6px; }
+input[type="text"], input[type="password"]{
+  width:100%; padding:12px 44px 12px 12px;
+  border:1px solid #e5e7eb; border-radius:12px; outline:none;
+  box-shadow:var(--shadow-sm); transition:.15s; font-size:14px; color:#282828;
+}
+input:focus{ border-color:var(--primary); box-shadow:0 0 0 4px var(--ring); }
+.toggle-eye{
+  position:absolute; right:10px; top:50%; transform:translateY(-50%);
+  border:none; background:transparent; cursor:pointer; color:#6b6b6b; font-size:13px;
+}
+.row{ display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
+.row .remember{ display:flex; align-items:center; gap:8px; color:#3a3a3a; font-size:13px; }
+.row a{ color:#282828; text-decoration:none; font-size:13px; opacity:.8; }
+.row a:hover{ opacity:1; text-decoration:underline; }
+
+button.login{
+  margin-top:12px; width:100%; padding:12px 16px;
+  border:none; border-radius:999px; cursor:pointer;
+  background:#282828; color:#fff; font-weight:700; font-size:15px;
+  box-shadow:0 10px 22px rgba(40,40,40,.25);
+  transition:.15s;
+}
+button.login:hover{ background:#1f1f1f; transform: translateY(-1px); }
+
+.error{ margin-top:10px; color:#c62828; font-size:13px; display:none; }
+.note{ text-align:center; color:#6b7280; font-size:12px; margin-top:8px; }
+
+/* ===== Footer (ONLY) ===== */
+footer{
+  background:#282828;
+  color:#fff;
+  width:100%;
+}
+.footer-inner{
+  max-width:1100px;
+  margin:0 auto;
+  padding:22px 20px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:28px;
+  flex-wrap:wrap;
+}
+.footer-col{
+  display:flex; flex-direction:column; align-items:flex-start; gap:8px;
+  min-width:180px;
+}
+.footer-logo{
+  display:flex; align-items:center; justify-content:flex-start;
+  padding-left:14px;
+}
+.footer-logo img{
+  width:120px; height:auto;
+}
+.footer-title{
+  font-weight:700; font-size:13px; letter-spacing:.4px; opacity:.95;
+  text-transform:uppercase;
+  margin-top:4px;
+}
+.footer-links a{
+  color:#fff; text-decoration:none; font-size:14px; opacity:.95;
+  display:block;
+}
+.footer-links a:hover{ text-decoration:underline; }
+.footer-phones span{
+  font-size:14px; display:block;
+}
+
+/* Social buttons */
+.footer-social{
+  display:flex; flex-direction:column; gap:10px;
+}
+.footer-social .btn-social{
+  display:inline-flex; align-items:center; gap:10px;
+  background:rgba(255,255,255,0.1);
+  padding:8px 12px; border-radius:8px;
+  color:#fff; text-decoration:none; font-weight:600; font-size:14px;
+  transition:.15s;
+}
+.footer-social .btn-social:hover{ background:rgba(255,255,255,0.22); }
+.footer-social .btn-social img{
+  width:22px; height:22px; object-fit:contain; display:block;
+  background:none; border:none; box-shadow:none; outline:none;
+}
+
+@media (max-width:640px){
+  .footer-inner{ justify-content:flex-start; gap:22px; }
+  .footer-col{ min-width:160px; }
+  .card-head img{ width:64px; height:64px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Main center area -->
+<div class="main">
+  <div class="card" role="dialog" aria-labelledby="title">
+    <div class="card-head">
+      <img src="SANSO.jpg" alt="Sanso">
+      <div class="card-title" id="title">Sanso Technical Department</div>
+    </div>
+
+    <div class="card-body">
+      <label for="username">მომხმარებელი</label>
+      <div class="input-wrap">
+        <input id="username" type="text" placeholder="შეიყვანე მომხმარებელი" autocomplete="username" autofocus>
+      </div>
+
+      <label for="password">პაროლი</label>
+      <div class="input-wrap">
+        <input id="password" type="password" placeholder="შეიყვანე პაროლი" autocomplete="current-password">
+        <button class="toggle-eye" type="button" onclick="togglePassword()">აჩვენე</button>
+      </div>
+
+      <div class="row">
+        <label class="remember">
+          <input id="remember" type="checkbox"> დამიმახსოვრე
+        </label>
+        <a href="#" onclick="alert(' გთხოვ, დაუკავშირდი ადმინისტრატორს. '); return false;">დამავიწყდა პაროლი</a>
+      </div>
+
+      <button class="login" onclick="doLogin()">შესვლა</button>
+      <div id="error" class="error">მომხმარებელი ან პაროლი არასწორია.</div>
+
+      <div class="note">ტესტური მომხმარებლები ავტომატურადაა გაწერილი.</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <!-- Column 1: Logo -->
+    <div class="footer-col footer-logo">
+      <img src="SANSO.jpg" alt="Sanso Logo">
+    </div>
+
+    <!-- Column 2: Websites -->
+    <div class="footer-col">
+      <div class="footer-title">ვებ გვერდები</div>
+      <div class="footer-links">
+        <a href="https://www.sanso.ge" target="_blank">www.sanso.ge</a>
+        <a href="https://www.soprano.ge" target="_blank">www.soprano.ge</a>
+      </div>
+    </div>
+
+    <!-- Column 3: Phones -->
+    <div class="footer-col">
+      <div class="footer-title">ტელეფონები</div>
+      <div class="footer-phones">
+        <span>+995 577 02 04 50</span>
+        <span>+995 577 10 49 00</span>
+      </div>
+    </div>
+
+    <!-- Column 4: Social -->
+    <div class="footer-col">
+      <div class="footer-title">WE ARE SOCIAL</div>
+      <div class="footer-social">
+        <a class="btn-social" href="https://www.facebook.com/SANSOCORPORATION" target="_blank" aria-label="Facebook">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" alt="Facebook">
+          Facebook
+        </a>
+        <a class="btn-social" href="https://www.instagram.com/sanso_inc/" target="_blank" aria-label="Instagram">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" alt="Instagram">
+          Instagram
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* Seed users */
+(function seedUsers(){
+  const USERS_SEED_VERSION = "v2";
+  const versionKey = "appUsersVersion";
+  const usersKey   = "appUsers";
+
+  const desired = [
+    { username:"admin",  password:"admin",  role:"Admin",      fullName:"ადმინი" },
+    { username:"sandro", password:"sandro", role:"Viewer",     fullName:"სანდრო" },
+    { username:"giorgi", password:"giorgi", role:"Viewer",     fullName:"გიორგი" },
+    { username:"niko",   password:"ნიკო",   role:"Technician", fullName:"ნიკო"   },
+    { username:"vaxo",   password:"vaxo",   role:"Technician", fullName:"ვახო"   }
+  ];
+
+  const currentVersion = localStorage.getItem(versionKey);
+  if (!currentVersion || currentVersion !== USERS_SEED_VERSION) {
+    localStorage.setItem(usersKey, JSON.stringify(desired));
+    localStorage.setItem(versionKey, USERS_SEED_VERSION);
+  } else if (!localStorage.getItem(usersKey)) {
+    localStorage.setItem(usersKey, JSON.stringify(desired));
+  }
+})();
+
+function togglePassword(){
+  const ip = document.getElementById("password");
+  const btn = event.currentTarget;
+  if(ip.type === "password"){ ip.type = "text"; btn.textContent = "დამალე"; }
+  else { ip.type = "password"; btn.textContent = "აჩვენე"; }
+}
+document.addEventListener("keydown", (e)=>{ if(e.key === "Enter") doLogin(); });
+
+function doLogin(){
+  const u = document.getElementById("username").value.trim();
+  const p = document.getElementById("password").value;
+  const remember = document.getElementById("remember").checked;
+  const errorEl = document.getElementById("error");
+
+  const users = JSON.parse(localStorage.getItem("appUsers")||"[]");
+  const found = users.find(x => x.username === u && x.password === p);
+
+  if(!found){ errorEl.style.display = "block"; return; }
+
+  const currentUser = {
+    username: found.username,
+    role: found.role,
+    fullName: found.fullName || found.username,
+    loginAt: new Date().toISOString(),
+    remember
+  };
+  localStorage.setItem("currentUser", JSON.stringify(currentUser));
+
+  // ✅ Login-ის ლოგირება
+  const logs = JSON.parse(localStorage.getItem("appLogs")||"[]");
+  logs.unshift({ user: found.username, action:"Login", time:new Date().toLocaleString("ka-GE") });
+  localStorage.setItem("appLogs", JSON.stringify(logs));
+
+  window.location.href = "main.html";
+}
+</script>
+</body>
+</html>

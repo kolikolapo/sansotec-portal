@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+<meta charset="UTF-8">
+<title>მომხმარებლის გვერდი</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+/* ===== Base ===== */
+body {
+  margin:0; padding:0;
+  font-family:"Myriad Pro","Segoe UI",Arial,sans-serif;
+  display:flex;
+  background:#f4f6f9; color:#282828;
+}
+
+/* ===== Sidebar (same as main) ===== */
+.sidebar {
+  width:200px;
+  background:#282828;
+  color:white;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+.sidebar img {
+  width:100px;
+  margin:20px 0;
+  border-radius:8px;
+}
+.sidebar a {
+  color:white;
+  text-decoration:none;
+  padding:12px 16px;
+  font-size:14px;
+  width:100%;
+  display:block;
+  text-align:left;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+  transition:background .2s;
+}
+.sidebar a:hover { background:rgba(255,255,255,0.12); }
+.sidebar a.active { background:rgba(255,255,255,0.25); }
+
+/* ===== Content wrapper ===== */
+.content {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+}
+
+/* ===== Top Banner (same as main) ===== */
+.topbar {
+  background:#282828;
+  color:white;
+  padding:14px 20px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.topbar .title {
+  font-size:18px;
+  font-weight:bold;
+}
+
+/* ===== Page body (kept from your user page) ===== */
+.container { width:90%; max-width:1200px; margin:20px auto; }
+
+.user-info {
+  display:grid; grid-template-columns:1fr 1fr; gap:20px;
+  background:white; padding:20px; border-radius:10px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.1); margin-bottom:20px;
+}
+.user-info div { font-size:16px; padding:5px 0; }
+
+.actions {
+  display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;
+}
+.actions button {
+  padding:10px 15px; border:none; background:#282828; color:white; border-radius:6px; cursor:pointer;
+}
+.actions button:hover { background:#1f1f1f; }
+
+table {
+  width:100%; border-collapse:collapse; background:white; border-radius:10px;
+  overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+table th, table td { padding:12px; text-align:left; border-bottom:1px solid #e7e7e7; font-size:14px; }
+table th { background:#efefef; }
+tr:hover { background:#f7f7f7; }
+
+a.file-link { color:#282828; text-decoration:underline; }
+
+.btn-small { padding:5px 10px; border:none; border-radius:5px; cursor:pointer; font-size:13px;}
+.btn-edit { background:#b58900; color:white;}
+.btn-delete { background:#b00020; color:white;}
+.btn-edit:hover, .btn-delete:hover { filter:brightness(0.95); }
+
+/* Back button (ვტოვებ ფუნქციურად უცვლელს) */
+.back-btn { margin-bottom:15px; padding:8px 12px; background:#6b6b6b; color:white; border:none; border-radius:5px; cursor:pointer;}
+.back-btn:hover { background:#555; }
+
+/* Popups (unchanged) */
+.modal { display:none; position:fixed; z-index:999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); }
+.modal-content { background:white; margin:5% auto; padding:24px; border-radius:10px; width:560px; max-width:92%; position:relative; box-shadow:0 5px 15px rgba(0,0,0,0.3); }
+.modal-content h3 { text-align:center; margin-top:0; color:#282828; }
+.modal-content label { display:block; margin-top:12px; }
+.modal-content input, .modal-content select { width:100%; padding:10px; margin-top:6px; margin-bottom:6px; border-radius:6px; border:1px solid #ccc; color:#282828; box-sizing:border-box; }
+.modal-content button { margin-top:16px; width:100%; padding:12px; background:#282828; color:white; border:none; border-radius:8px; cursor:pointer; }
+.modal-content button:hover { background:#1f1f1f; }
+.close { position:absolute; right:15px; top:10px; font-size:22px; font-weight:bold; color:#333; cursor:pointer; }
+
+/* Lightbox (unchanged) */
+#photoLightbox { display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8); }
+#photoLightbox img { max-width:90%; max-height:80%; display:block; margin:50px auto; }
+#photoLightbox button { margin:0 5px; padding:5px 10px; border:none; border-radius:5px; cursor:pointer; background:#282828; color:white; }
+#photoLightbox span.close { position:absolute; right:20px; top:10px; font-size:28px; font-weight:bold; cursor:pointer; color:white; }
+
+/* Revenue badge */
+.badge-wrap { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; }
+.revenue-badge { display:none; font-size:14px; background:#fff; padding:6px 10px; border-radius:8px; border:1px solid #ddd; box-shadow:0 2px 6px rgba(0,0,0,0.05); }
+</style>
+</head>
+<body>
+
+<!-- ===== Sidebar ===== -->
+<div class="sidebar">
+  <img src="SANSO.jpg" alt="Sanso Logo">
+  <a href="main.html">🏠 მთავარი</a>
+  <a href="stats.html" id="statsLink">📊 სტატისტიკა</a>
+  <a href="settings.html" id="settingsLink" style="display:none;">⚙️ პარამეტრები</a>
+  <a href="profile.html" id="profileLink" style="display:none;">👤 პროფილი</a>
+  <a href="#" onclick="logout()">🚪 გასვლა</a>
+</div>
+
+<!-- ===== Content ===== -->
+<div class="content">
+  <div class="topbar">
+    <div class="title">Sanso Technical Department</div>
+    <div></div>
+  </div>
+
+  <div class="container">
+    <!-- ვტოვებ უკან გასვლის ღილაკს (არ შევეხე ფუნქციას) -->
+    <button class="back-btn" onclick="goBack()">← უკან</button>
+
+    <div class="user-info" id="userInfo"></div>
+
+    <div class="badge-wrap">
+      <h2 style="margin:0;">ტექნიკური ვიზიტები (<span id="serviceCount">0</span>)</h2>
+      <div id="userRevenue" class="revenue-badge">ჯამური შემოსავალი: <strong><span id="userRevenueValue">0.00 ₾</span></strong></div>
+    </div>
+
+    <div class="actions" style="margin-top:8px;">
+      <button id="addServiceBtn" onclick="openServiceForm()">+ ტექნიკური სერვისის დამატება</button>
+    </div>
+
+    <table id="serviceTable">
+      <thead>
+        <tr>
+          <th>თარიღი</th>
+          <th>დანიშნულება 
+            <select id="filterPurpose" onchange="filterTable()">
+              <option value="">ყველა</option>
+              <option>წმენდა</option>
+              <option>გამოძახება</option>
+              <option>ფილტრები</option>
+              <option>თავაკის შეკეთება</option>
+              <option>აპარატის შეკეთება</option>
+              <option>სხვა</option>
+            </select>
+          </th>
+          <th>დოკუმენტი</th>
+          <th>ფოტოები</th>
+          <th>ფასი (GEL)</th>
+          <th>ტექნიკოსი
+            <select id="filterTechnician" onchange="filterTable()">
+              <option value="">ყველა</option>
+              <option>ნიკო</option>
+              <option>ვახო</option>
+              <option>ნიკო/ვახო</option>
+            </select>
+          </th>
+          <th>ქმედება</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== Add/Edit Service Modal (unchanged) ===== -->
+<div id="serviceModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeServiceForm()">&times;</span>
+    <h3 id="modalTitle">ტექნიკური სერვისი</h3>
+    <label>თარიღი:</label>
+    <input type="text" id="serviceDate">
+    <label>დანიშნულება:</label>
+    <select id="servicePurposeSelect">
+      <option>წმენდა</option>
+      <option>გამოძახება</option>
+      <option>ფილტრები</option>
+      <option>თავაკის შეკეთება</option>
+      <option>აპარატის შეკეთება</option>
+      <option>სხვა</option>
+    </select>
+    <label>დოკუმენტი (PDF):</label>
+    <input type="file" id="serviceDoc" accept=".pdf">
+    <label>ფოტოები:</label>
+    <input type="file" id="servicePhotos" accept="image/*" multiple>
+    <label>ფასი (GEL):</label>
+    <input type="number" id="servicePrice">
+    <label>ტექნიკოსი:</label>
+    <select id="serviceTechnician">
+      <option>ნიკო</option>
+      <option>ვახო</option>
+      <option>ნიკო/ვახო</option>
+    </select>
+    <button type="button" onclick="saveService()">შენახვა</button>
+  </div>
+</div>
+
+<!-- ===== Lightbox (unchanged) ===== -->
+<div id="photoLightbox">
+  <span class="close" onclick="closeLightbox()">&#215;</span>
+  <img id="lightboxImage">
+  <div style="text-align:center; margin-top:10px;">
+    <button onclick="prevPhoto()">⟨ წინა</button>
+    <button onclick="nextPhoto()">მომდევნო ⟩</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+/* ===== Guard (unchanged) ===== */
+(function(){
+  const cu = JSON.parse(localStorage.getItem("currentUser")||"null");
+  if(!cu){ window.location.href = "login.html"; }
+})();
+
+/* ===== Role helpers (kept) ===== */
+function getRole(){
+  const cu = JSON.parse(localStorage.getItem("currentUser")||"null");
+  return cu?.role || "Viewer";
+}
+function isAdmin(){ return getRole()==="Admin"; }
+function isTech(){ return getRole()==="Technician"; }
+function isViewer(){ return getRole()==="Viewer"; }
+
+/* ===== Users + Selected (kept) ===== */
+let users = JSON.parse(localStorage.getItem("users")) || [];
+let selectedUserId = localStorage.getItem("selectedUser");
+let currentUser = users.find(u=>u.id===selectedUserId);
+let editingIndex = null;
+
+/* ===== Dates migration (kept) ===== */
+function toDisplayDate(str){
+  if (!str) return str;
+  if (/^\d{2}\.\d{2}\.\d{4}$/.test(str)) return str;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str);
+  if (m) { const [, y, mm, dd] = m; return `${dd}.${mm}.${y}`; }
+  return str;
+}
+function migrateOldDatesForUser(user){
+  if (!user || !Array.isArray(user.services)) return;
+  let changed = false;
+  user.services.forEach(s => {
+    if (s && s.date) {
+      const nd = toDisplayDate(s.date);
+      if (nd !== s.date) { s.date = nd; changed = true; }
+    }
+  });
+  if (changed) {
+    const idx = users.findIndex(u => u.id === user.id);
+    if (idx !== -1) { users[idx] = user; localStorage.setItem("users", JSON.stringify(users)); }
+  }
+}
+migrateOldDatesForUser(currentUser);
+
+function parseDDMMYYYY(str){
+  const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(str || "");
+  if (!m) return new Date(0);
+  const [ , dd, mm, yyyy ] = m;
+  return new Date(parseInt(yyyy,10), parseInt(mm,10)-1, parseInt(dd,10));
+}
+
+/* ===== Renderers (kept) ===== */
+function renderUserInfo() {
+  const infoDiv = document.getElementById("userInfo");
+  if(!currentUser){ infoDiv.innerHTML="<div>მომხმარებელი ვერ მოიძებნა</div>"; return; }
+
+  let devicesList = "არ არის მითითებული";
+  if (currentUser.devices && currentUser.devices.length > 0){
+    const d = currentUser.devices[0];
+    if (typeof d === "object") {
+      const m = d.model || "";
+      const s = (d.serial || "").trim();
+      devicesList = s ? `${m} | ${s}` : m;
+    } else {
+      devicesList = d;
+    }
+  }
+
+  infoDiv.innerHTML = `
+    <div><strong>ID:</strong> ${currentUser.id}</div>
+    <div><strong>დასახელება:</strong> ${currentUser.name}</div>
+    <div><strong>საიდენთიფიკაციო კოდი:</strong> ${currentUser.code || ""}</div>
+    <div><strong>მისამართი:</strong> ${currentUser.address || ""}</div>
+    <div><strong>ტელეფონი:</strong> ${currentUser.phone || ""}</div>
+    <div><strong>საკონტაქტო პირი:</strong> ${currentUser.contact || ""}</div>
+    <div><strong>აპარატი:</strong> ${devicesList}</div>
+  `;
+}
+
+function updateUserRevenueBadge(){
+  const revBox = document.getElementById("userRevenue");
+  if (isTech()) { revBox.style.display = "none"; return; }
+
+  const total = (currentUser.services || []).reduce((sum, s)=>{
+    const p = parseFloat(s.price || 0);
+    return sum + (isNaN(p) ? 0 : p);
+  }, 0);
+  document.getElementById("userRevenueValue").textContent = total.toFixed(2) + " ₾";
+  revBox.style.display = "inline-block";
+}
+
+function renderServices() {
+  const tbody = document.getElementById("serviceTable").tBodies[0];
+  tbody.innerHTML = "";
+  if(!currentUser.services) currentUser.services=[];
+
+  const addBtn = document.getElementById("addServiceBtn");
+  if (addBtn) addBtn.style.display = isViewer() ? "none" : "inline-block";
+
+  const items = currentUser.services.map((s,i)=>({s,i}));
+  items.sort((a,b)=> parseDDMMYYYY(b.s.date) - parseDDMMYYYY(a.s.date));
+
+  items.forEach(({s, i:origIndex})=>{
+    const docLink = (s.doc && s.doc instanceof File) 
+      ? `<a class="file-link" href="${URL.createObjectURL(s.doc)}" target="_blank">${s.doc.name}</a>` 
+      : "";
+
+    const photosLinks = (s.photos && s.photos.length>0) 
+      ? s.photos.map((p,photoIdx)=> p instanceof File 
+          ? `<a href="#" class="file-link" onclick="openPhotoLightboxService(${origIndex},${photoIdx});return false;">Photo ${photoIdx+1}</a>` 
+          : "").join("<br>") 
+      : "";
+
+    let actionHtml = "";
+    if (!isViewer()) {
+      actionHtml = `
+        <button class="btn-small btn-edit" onclick="editService(${origIndex})">რედაქტირება</button>
+        <button class="btn-small btn-delete" onclick="deleteService(${origIndex})">წაშლა</button>
+      `;
+    }
+
+    const row = tbody.insertRow();
+    row.innerHTML = `
+      <td>${s.date}</td>
+      <td>${s.purpose}</td>
+      <td>${docLink}</td>
+      <td>${photosLinks}</td>
+      <td>${s.price}</td>
+      <td>${s.technician || "-"}</td>
+      <td>${actionHtml}</td>`;
+  });
+
+  document.getElementById("serviceCount").innerText=currentUser.services.length;
+  updateUserRevenueBadge();
+  filterTable();
+}
+
+/* ===== Form handlers (kept) ===== */
+function openServiceForm() {
+  if (isViewer()) { alert("დაშვება მხოლოდ Admin/Technician როლებისთვის."); return; }
+  editingIndex=null;
+  document.getElementById("modalTitle").innerText="ახალი სერვისი";
+  document.getElementById("serviceDate").value="";
+  document.getElementById("servicePurposeSelect").selectedIndex=0;
+  document.getElementById("serviceDoc").value="";
+  document.getElementById("servicePhotos").value="";
+  document.getElementById("servicePrice").value="";
+  document.getElementById("serviceTechnician").selectedIndex=0;
+  document.getElementById("serviceModal").style.display="block";
+}
+function closeServiceForm(){ document.getElementById("serviceModal").style.display="none"; }
+
+function saveService() {
+  if (isViewer()) { alert("დაშვება მხოლოდ Admin/Technician როლებისთვის."); return; }
+  const date=document.getElementById("serviceDate").value;
+  const purpose=document.getElementById("servicePurposeSelect").value;
+  const doc=document.getElementById("serviceDoc").files[0];
+  const photos=Array.from(document.getElementById("servicePhotos").files);
+  const price=document.getElementById("servicePrice").value;
+  const technician=document.getElementById("serviceTechnician").value;
+
+  if(!date || !purpose || !price){ alert("ყველა სავალდებულო ველი შეავსეთ!"); return; }
+
+  if(editingIndex!==null){
+    let s=currentUser.services[editingIndex];
+    s.date=date; s.purpose=purpose; s.price=price; s.technician=technician;
+    if(doc) s.doc=doc;
+    if(photos.length>0) s.photos=photos;
+  } else {
+    currentUser.services.push({date,purpose,doc,photos,price,technician});
+  }
+
+  const idx = users.findIndex(u => u.id === currentUser.id);
+  if (idx !== -1) { users[idx] = currentUser; }
+  localStorage.setItem("users", JSON.stringify(users));
+
+  renderServices();
+  closeServiceForm();
+}
+
+function deleteService(idx){
+  if (isViewer()) { alert("დაშვება მხოლოდ Admin/Technician როლებისთვის."); return; }
+  if(confirm("გსურთ წაშლა?")){
+    currentUser.services.splice(idx,1);
+    const idxU = users.findIndex(u => u.id === currentUser.id);
+    if (idxU !== -1) { users[idxU] = currentUser; }
+    localStorage.setItem("users",JSON.stringify(users));
+    renderServices();
+  }
+}
+
+function editService(idx){
+  if (isViewer()) { alert("დაშვება მხოლოდ Admin/Technician როლებისთვის."); return; }
+  const s=currentUser.services[idx];
+  editingIndex=idx;
+  document.getElementById("modalTitle").innerText="სერვისის რედაქტირება";
+  document.getElementById("serviceDate").value=s.date;
+  document.getElementById("servicePurposeSelect").value=s.purpose;
+  document.getElementById("servicePrice").value=s.price;
+  document.getElementById("serviceTechnician").value=s.technician || "ნიკო";
+  document.getElementById("serviceModal").style.display="block";
+}
+
+/* ===== Filters (kept) ===== */
+function filterTable(){
+  const purposeVal=(document.getElementById("filterPurpose").value||"").toLowerCase();
+  const techVal=(document.getElementById("filterTechnician").value||"").toLowerCase();
+  const trs=document.getElementById("serviceTable").tBodies[0].rows;
+  Array.from(trs).forEach(tr=>{
+    const purposeText=tr.cells[1].innerText.toLowerCase();
+    const techText=tr.cells[5].innerText.toLowerCase();
+    const passPurpose = purposeVal ? purposeText.includes(purposeVal) : true;
+    const passTech    = techVal ? techText.includes(techVal) : true;
+    tr.style.display = (passPurpose && passTech) ? "" : "none";
+  });
+}
+
+/* ===== Navigation (kept goBack; added logout + role-based menu) ===== */
+function goBack(){ window.location.href="main.html"; }
+
+function logout(){
+  const cu = JSON.parse(localStorage.getItem("currentUser"));
+  if(cu){
+    const logs=JSON.parse(localStorage.getItem("appLogs")||"[]");
+    logs.unshift({ user:cu.username, action:"Logout", time:new Date().toLocaleString("ka-GE") });
+    localStorage.setItem("appLogs",JSON.stringify(logs));
+  }
+  localStorage.removeItem("currentUser");
+  window.location.href="login.html";
+}
+
+function updateSidebarByRole(){
+  const statsLink = document.getElementById("statsLink");
+  const settingsLink = document.getElementById("settingsLink");
+  const profileLink = document.getElementById("profileLink");
+
+  if (isTech()) {
+    if (statsLink) statsLink.style.display = "none";
+    if (settingsLink) settingsLink.style.display = "none";
+    if (profileLink) profileLink.style.display = "block";
+  } else if (isViewer()) {
+    if (statsLink) statsLink.style.display = "block";
+    if (settingsLink) settingsLink.style.display = "none";
+    if (profileLink) profileLink.style.display = "block";
+  } else if (isAdmin()) {
+    if (statsLink) statsLink.style.display = "block";
+    if (settingsLink) settingsLink.style.display = "block";
+    if (profileLink) profileLink.style.display = "none";
+  }
+}
+updateSidebarByRole();
+
+/* ===== Init (kept) ===== */
+flatpickr("#serviceDate", { dateFormat: "d.m.Y", allowInput: true, clickOpens: true });
+
+if(!currentUser) {
+  // თუ selectedUser არ არის, დავაბრუნოთ მთავარზე
+  window.location.href = "main.html";
+} else {
+  if(!currentUser.services) currentUser.services=[];
+  renderUserInfo();
+  renderServices();
+}
+</script>
+
+</body>
+</html>
