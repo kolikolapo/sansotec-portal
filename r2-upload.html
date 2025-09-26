@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ka">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>R2 Upload Test (Worker /upload)</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:720px;margin:40px auto;padding:0 16px}
+    .card{border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-top:16px}
+    .row{display:flex;gap:8px;align-items:center}
+    .row input[type="file"]{flex:1}
+    button{padding:10px 16px;border-radius:8px;border:1px solid #111827;background:#111827;color:#fff;cursor:pointer}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    .ok{color:#047857}
+    .err{color:#b91c1c;white-space:pre-wrap}
+    code{background:#f3f4f6;padding:2px 6px;border-radius:6px}
+  </style>
+</head>
+<body>
+  <h1>R2 Upload Test (Worker Proxy)</h1>
+
+  <div class="card">
+    <label for="endpoint">Worker Upload Endpoint (POST):</label><br/>
+    <input id="endpoint" type="url" style="width:100%"
+      value="https://restless-lab-c6ef.n-gogolashvili.workers.dev/upload" />
+    <small>ეს არის შენი Cloudflare Worker-ის <code>/upload</code> მისამართი.</small>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <input id="file" type="file" accept=".png,.jpg,.jpeg,.webp,.pdf" />
+      <button id="btn">ატვირთვა</button>
+    </div>
+    <div id="out" style="margin-top:12px"></div>
+  </div>
+
+  <script>
+    const $ = (s) => document.querySelector(s);
+    const btn = $("#btn");
+    const fileInput = $("#file");
+    const out = $("#out");
+    const endpointInput = $("#endpoint");
+
+    function showOk(msg, url){
+      out.innerHTML = `<div class="ok">✅ ${msg}</div>` + (url ? `<div><a target="_blank" href="${url}">${url}</a></div>` : "");
+    }
+    function showErr(prefix, obj){
+      const text = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
+      out.innerHTML = `<div class="err">❌ ${prefix}:\n${text}</div>`;
+    }
+
+    btn.addEventListener("click", async () => {
+      out.textContent = "";
+      const endpoint = endpointInput.value.trim();
+      const file = fileInput.files[0];
+
+      if (!endpoint) return showErr("Endpoint ცარიელია", "");
+      if (!file)     return showErr("ფაილი არ არის არჩეული", "");
+
+      const fd = new FormData();
+      fd.append("file", file);
+
+      btn.disabled = true;
+      btn.textContent = "იტვირთება…";
+      try {
+        const res = await fetch(endpoint, { method: "POST", body: fd });
+        const data = await res.json().catch(()=> ({}));
+
+        if (!res.ok) {
+          return showErr(`Error (${res.status})`, data || await res.text());
+        }
+        if (data?.ok && data?.publicUrl) {
+          showOk("ატვირთვა დასრულდა!", data.publicUrl);
+        } else {
+          showErr("უცნობი პასუხი", data);
+        }
+      } catch (e) {
+        showErr("ქსელური შეცდომა", String(e));
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "ატვირთვა";
+      }
+    });
+  </script>
+</body>
+</html>
