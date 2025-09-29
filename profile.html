@@ -254,5 +254,18 @@ function logout(){
 }
 </script>
 
+<script src="/js/sync-users.js"></script>
+<script>
+  (function boot() {
+    if (window.SansoSync && typeof window.SansoSync.init === 'function') {
+      window.SansoSync.init();
+    } else {
+      console.error('SansoSync not loaded. Check /js/sync-users.js path.');
+    }
+  })();
+  // window.SansoSync.push(); // სურვილისამებრ, როცა შენს არსებულ კოდში users-ს ცვლი/ინახავ
+</script>
+
+
 </body>
 </html>
