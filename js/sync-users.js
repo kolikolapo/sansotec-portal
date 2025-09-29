@@ -2,7 +2,8 @@
   // --- CONFIG ---
   const WORKER_BASE = 'https://restless-lab-c6ef.n-gogolashvili.workers.dev';
   const LS_KEY = 'users';
-  const POLL_MS = 0; // set to 60000 later if periodic pull needed
+  const POLL_MS = 10000; // 10s; later set to 60000 (1 min)
+
 
   // --- helpers ---
   const api = {
@@ -39,6 +40,12 @@
       try { localStorage.setItem(LS_KEY, JSON.stringify(arr ?? [])); } catch {}
     },
   };
+
+  function readMeta() {
+    try { return JSON.parse(localStorage.getItem(META_KEY) || '{}'); }
+       catch { return {}; }
+}
+
 
   function hashJson(x) {
     try {
@@ -94,20 +101,40 @@
     saveMeta(hashJson(local));
   }
 
-  function maybeStartPolling() {
-    if (!POLL_MS) return;
-    setInterval(async () => {
-      try {
-        const remote = await api.getUsers();
-        const local  = ls.read();
-        const merged = mergeUnique(local, remote);
-        if (hashJson(merged) !== hashJson(local)) {
-          ls.write(merged);
-          saveMeta(hashJson(merged));
-        }
-      } catch {}
-    }, POLL_MS);
-  }
+function maybeStartPolling() {
+  if (!POLL_MS) return;
+  setInterval(async () => {
+    try {
+      // 1) თუ ლოკალში users შეიცვალა ბოლო სინქის შემდეგ — გააგზავნე სერვერზე (auto-push, debounced by interval)
+      const local = ls.read();
+      const meta  = readMeta();
+      const hLocal = hashJson(local);
+      if (hLocal && hLocal !== meta?.hash) {
+        await api.saveUsers(local);
+        saveMeta(hLocal);
+      }
+
+      // 2) გადაიწიე სერვერიდან და დააშეარე ლოკალში, თუ რამე ახალია (pull/merge)
+      const remote = await api.getUsers();
+      const merged = mergeUnique(local, remote);
+      const hMerged = hashJson(merged);
+      if (hMerged !== hLocal) {
+        ls.write(merged);
+        saveMeta(hMerged);
+      }
+    } catch {
+      // ჩუმად ჩავვარდეთ — offline safe
+    }
+  }, POLL_MS);
+
+  // დამატებითი უსაფრთხოება: გვერდის დახურვისას კიდევ ერთხელ გააგზავნე
+  window.addEventListener('beforeunload', () => {
+    try { navigator.sendBeacon && navigator.sendBeacon; } catch {}
+    // fire-and-forget
+    window.SansoSync && window.SansoSync.push && window.SansoSync.push();
+  });
+}
+
 
   // public API
   window.SansoSync = {
