@@ -330,6 +330,42 @@ function logout(){
   // window.SansoSync.push(); // სურვილისამებრ, როცა შენს არსებულ კოდში users-ს ცვლი/ინახავ
 </script>
 
+<script src="/js/server-store.js"></script>
+
+<script>
+  // ჩატვირთვაზე: appUsers სერვერიდან localStorage-ში ჩაიწეროს,
+  // რომ შენს არსებულ UI-ს უცვლელად იმუშაოს
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const remote =
+        (window.ServerStore && ServerStore.getAppUsers)
+          ? await ServerStore.getAppUsers()
+          : [];
+      if (Array.isArray(remote) && remote.length) {
+        localStorage.setItem('appUsers', JSON.stringify(remote));
+      }
+    } catch {}
+  });
+
+  // ნებისმიერ setItem('appUsers', .) შემდეგ — ჩუმი push სერვერზე (debounce)
+  (function () {
+    const _set = localStorage.setItem.bind(localStorage);
+    localStorage.setItem = function (k, v) {
+      _set(k, v);
+      if (k === 'appUsers' && window.ServerStore && ServerStore.saveAppUsers) {
+        clearTimeout(localStorage.__appUsersPushT);
+        localStorage.__appUsersPushT = setTimeout(async () => {
+          try {
+            const cur = JSON.parse(localStorage.getItem('appUsers') || '[]');
+            await ServerStore.saveAppUsers(cur);
+          } catch {}
+        }, 250);
+      }
+    };
+  })();
+</script>
+
+
 
 </body>
 </html>

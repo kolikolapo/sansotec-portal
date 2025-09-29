@@ -495,6 +495,43 @@ renderUsers();
   // window.SansoSync.push(); // სურვილისამებრ, როცა შენს არსებულ კოდში users-ს ცვლი/ინახავ
 </script>
 
+<script src="/js/server-store.js"></script>
+
+<script>
+  // ჩატვირთვაზე: users სერვერიდან localStorage-ში ჩაიწეროს,
+  // რომ შენი არსებული users-ცხრილმა უცვლელად იმუშაოს
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const remoteUsers =
+        (window.ServerStore && ServerStore.getUsers)
+          ? await ServerStore.getUsers()
+          : [];
+      if (Array.isArray(remoteUsers) && remoteUsers.length) {
+        localStorage.setItem('users', JSON.stringify(remoteUsers));
+      }
+    } catch {}
+  });
+
+  // ნებისმიერ setItem('users', ...) შემდეგ — ჩუმი push სერვერზე (debounce)
+  (function () {
+    const _set = localStorage.setItem.bind(localStorage);
+    localStorage.setItem = function (k, v) {
+      _set(k, v);
+      if (k === 'users' && window.ServerStore && ServerStore.saveUsers) {
+        clearTimeout(localStorage.__usersPushT);
+        localStorage.__usersPushT = setTimeout(async () => {
+          try {
+            const cur = JSON.parse(localStorage.getItem('users') || '[]');
+            await ServerStore.saveUsers(cur);
+          } catch {}
+        }, 250);
+      }
+    };
+  })();
+</script>
+
+
+
 
 </body>
 </html>
