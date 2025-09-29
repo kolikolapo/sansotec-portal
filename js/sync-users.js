@@ -2,7 +2,7 @@
   // --- CONFIG ---
   const WORKER_BASE = 'https://restless-lab-c6ef.n-gogolashvili.workers.dev';
   const LS_KEY = 'users';
-  const POLL_MS = 0; // set to 60000 later if periodic pull needed
+  const POLL_MS = 10000; // 10s; later set to 60000 (1 min)
 
   // --- helpers ---
   const api = {
@@ -11,6 +11,8 @@
         const r = await fetch(`${WORKER_BASE}/get-users`, { method: 'GET' });
         if (!r.ok) return [];
         const j = await r.json().catch(() => ({}));
+        // მიიღე ორივე ფორმატი: {users:[...]} ან პირდაპირ [...]
+        if (Array.isArray(j)) return j;
         return Array.isArray(j?.users) ? j.users : [];
       } catch {
         return [];
@@ -21,9 +23,12 @@
         await fetch(`${WORKER_BASE}/save-users`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(users ?? []),
+          // ფიქსი: ყოველთვის ობიექტით ვაგზავნით {users:[...]}
+          body: JSON.stringify({ users: users ?? [] }),
         });
-      } catch { /* keep silent; offline safe */ }
+      } catch {
+        /* keep silent; offline safe */
+      }
     },
   };
 
@@ -39,6 +44,15 @@
       try { localStorage.setItem(LS_KEY, JSON.stringify(arr ?? [])); } catch {}
     },
   };
+
+  const META_KEY = 'users_sync_meta';
+  function readMeta() {
+    try { return JSON.parse(localStorage.getItem(META_KEY) || '{}'); }
+    catch { return {}; }
+  }
+  function saveMeta(hash) {
+    try { localStorage.setItem(META_KEY, JSON.stringify({ lastSync: Date.now(), hash })); } catch {}
+  }
 
   function hashJson(x) {
     try {
@@ -61,11 +75,6 @@
       if (!seen.has(k)) { seen.add(k); out.push(x); }
     }
     return out;
-  }
-
-  const META_KEY = 'users_sync_meta';
-  function saveMeta(hash) {
-    try { localStorage.setItem(META_KEY, JSON.stringify({ lastSync: Date.now(), hash })); } catch {}
   }
 
   async function initialSync() {
@@ -98,15 +107,33 @@
     if (!POLL_MS) return;
     setInterval(async () => {
       try {
-        const remote = await api.getUsers();
-        const local  = ls.read();
-        const merged = mergeUnique(local, remote);
-        if (hashJson(merged) !== hashJson(local)) {
-          ls.write(merged);
-          saveMeta(hashJson(merged));
+        // 1) თუ ლოკალში users შეიცვალა ბოლო სინქის შემდეგ — auto-push
+        const local = ls.read();
+        const meta  = readMeta();
+        const hLocal = hashJson(local);
+        if (hLocal && hLocal !== meta?.hash) {
+          await api.saveUsers(local);
+          saveMeta(hLocal);
         }
-      } catch {}
+
+        // 2) pull/merge სერვერიდან
+        const remote = await api.getUsers();
+        const merged = mergeUnique(local, remote);
+        const hMerged = hashJson(merged);
+        if (hMerged !== hLocal) {
+          ls.write(merged);
+          saveMeta(hMerged);
+        }
+      } catch {
+        // offline safe
+      }
     }, POLL_MS);
+
+    // გვერდის დახურვისას უსაფრთხო push
+    window.addEventListener('beforeunload', () => {
+      try { /* no-op; some browsers block async here */ } catch {}
+      window.SansoSync && window.SansoSync.push && window.SansoSync.push();
+    });
   }
 
   // public API
