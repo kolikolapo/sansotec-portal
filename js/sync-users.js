@@ -4,7 +4,6 @@
   const LS_KEY = 'users';
   const POLL_MS = 10000; // 10s; later set to 60000 (1 min)
 
-
   // --- helpers ---
   const api = {
     async getUsers() {
@@ -12,6 +11,8 @@
         const r = await fetch(`${WORKER_BASE}/get-users`, { method: 'GET' });
         if (!r.ok) return [];
         const j = await r.json().catch(() => ({}));
+        // მიიღე ორივე ფორმატი: {users:[...]} ან პირდაპირ [...]
+        if (Array.isArray(j)) return j;
         return Array.isArray(j?.users) ? j.users : [];
       } catch {
         return [];
@@ -22,9 +23,12 @@
         await fetch(`${WORKER_BASE}/save-users`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(users ?? []),
+          // ფიქსი: ყოველთვის ობიექტით ვაგზავნით {users:[...]}
+          body: JSON.stringify({ users: users ?? [] }),
         });
-      } catch { /* keep silent; offline safe */ }
+      } catch {
+        /* keep silent; offline safe */
+      }
     },
   };
 
@@ -41,11 +45,14 @@
     },
   };
 
+  const META_KEY = 'users_sync_meta';
   function readMeta() {
     try { return JSON.parse(localStorage.getItem(META_KEY) || '{}'); }
-       catch { return {}; }
-}
-
+    catch { return {}; }
+  }
+  function saveMeta(hash) {
+    try { localStorage.setItem(META_KEY, JSON.stringify({ lastSync: Date.now(), hash })); } catch {}
+  }
 
   function hashJson(x) {
     try {
@@ -68,11 +75,6 @@
       if (!seen.has(k)) { seen.add(k); out.push(x); }
     }
     return out;
-  }
-
-  const META_KEY = 'users_sync_meta';
-  function saveMeta(hash) {
-    try { localStorage.setItem(META_KEY, JSON.stringify({ lastSync: Date.now(), hash })); } catch {}
   }
 
   async function initialSync() {
@@ -101,40 +103,38 @@
     saveMeta(hashJson(local));
   }
 
-function maybeStartPolling() {
-  if (!POLL_MS) return;
-  setInterval(async () => {
-    try {
-      // 1) თუ ლოკალში users შეიცვალა ბოლო სინქის შემდეგ — გააგზავნე სერვერზე (auto-push, debounced by interval)
-      const local = ls.read();
-      const meta  = readMeta();
-      const hLocal = hashJson(local);
-      if (hLocal && hLocal !== meta?.hash) {
-        await api.saveUsers(local);
-        saveMeta(hLocal);
+  function maybeStartPolling() {
+    if (!POLL_MS) return;
+    setInterval(async () => {
+      try {
+        // 1) თუ ლოკალში users შეიცვალა ბოლო სინქის შემდეგ — auto-push
+        const local = ls.read();
+        const meta  = readMeta();
+        const hLocal = hashJson(local);
+        if (hLocal && hLocal !== meta?.hash) {
+          await api.saveUsers(local);
+          saveMeta(hLocal);
+        }
+
+        // 2) pull/merge სერვერიდან
+        const remote = await api.getUsers();
+        const merged = mergeUnique(local, remote);
+        const hMerged = hashJson(merged);
+        if (hMerged !== hLocal) {
+          ls.write(merged);
+          saveMeta(hMerged);
+        }
+      } catch {
+        // offline safe
       }
+    }, POLL_MS);
 
-      // 2) გადაიწიე სერვერიდან და დააშეარე ლოკალში, თუ რამე ახალია (pull/merge)
-      const remote = await api.getUsers();
-      const merged = mergeUnique(local, remote);
-      const hMerged = hashJson(merged);
-      if (hMerged !== hLocal) {
-        ls.write(merged);
-        saveMeta(hMerged);
-      }
-    } catch {
-      // ჩუმად ჩავვარდეთ — offline safe
-    }
-  }, POLL_MS);
-
-  // დამატებითი უსაფრთხოება: გვერდის დახურვისას კიდევ ერთხელ გააგზავნე
-  window.addEventListener('beforeunload', () => {
-    try { navigator.sendBeacon && navigator.sendBeacon; } catch {}
-    // fire-and-forget
-    window.SansoSync && window.SansoSync.push && window.SansoSync.push();
-  });
-}
-
+    // გვერდის დახურვისას უსაფრთხო push
+    window.addEventListener('beforeunload', () => {
+      try { /* no-op; some browsers block async here */ } catch {}
+      window.SansoSync && window.SansoSync.push && window.SansoSync.push();
+    });
+  }
 
   // public API
   window.SansoSync = {
