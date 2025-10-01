@@ -1,11 +1,9 @@
 // js/server-storage-bridge.js
-// Server-backed shim for localStorage (only for keys: 'users', 'appUsers', 'logs').
-// UI/ლოგიკას არ ვეხებით: შენი არსებული კოდი ისევ localStorage-ს კითხულობს/წერს,
-// მაგრამ ამ კონკრეტული გასაღებები რეალურად სერვერზე ინახება/იკითხება.
-// - არ ვწერთ ნამდვილი localStorage-ში ამ გასაღებებისთვის (სხვა გასაღებებს არ ვეხებით).
-// - getItem() სანამ სერვერი "მზადდება", უბრუნებს ნამდვილი localStorage-ს,
-//   რომ login და დანარჩენი ნაკადი დაუყოვნებლივ იმუშაოს.
-// - ჩატვირთვის შემდეგ ქეში ივსება სერვერიდან, setItem/removeItem → POST /save-users.
+// Server-backed shim for localStorage (keys: 'users', 'appUsers', 'logs').
+// - UI/ლოგიკას არ ვეხებით: შენი კოდი ისევ localStorage-ს კითხულობს/წერს.
+// - ამ გასაღებებისთვის რეალურად ვმართავთ შიდა ქეშს და სერვერს.
+// - სანამ სერვერი მზადდება ან როცა სერვერზე ცარიელია, ვუბრუნებთ რეალურ localStorage-ს,
+//   რომ login (admin/admin) და ძველი ნაკადი იმუშავოს.
 
 (() => {
   // --- CONFIG ---
@@ -13,34 +11,22 @@
   const KEYS = new Set(['users', 'appUsers', 'logs']);
 
   // --- INTERNAL STATE ---
-  const cache = {
-    users:   [],
-    appUsers:[],
-    appLogs: []
-  };
+  const cache = { users: [], appUsers: [], appLogs: [] };
   let ready = false;
   let pushing = false;
   let pendingPush = false;
 
   // --- HELPERS ---
-  function safeParse(v, fallback) {
-    try { const j = JSON.parse(v); return j ?? fallback; } catch { return fallback; }
-  }
+  function safeParse(v, fallback) { try { const j = JSON.parse(v); return j ?? fallback; } catch { return fallback; } }
   function asArray(x) { return Array.isArray(x) ? x : []; }
-
   async function fetchJSON(url, init) {
-    try {
-      const r = await fetch(url, init);
-      if (!r.ok) return null;
-      return await r.json().catch(()=>null);
-    } catch { return null; }
+    try { const r = await fetch(url, init); if (!r.ok) return null; return await r.json().catch(()=>null); }
+    catch { return null; }
   }
 
-  // სერვერის პასუხის "ფორმის" შენიღბვა (იღებს array-საც და ობიექტსაც)
+  // სერვერის პასუხის ფორმატის აბსტრაქცია (იღებს array-საც და ობიექტსაც)
   function shape(raw) {
-    if (Array.isArray(raw)) {
-      return { users: raw, appUsers: [], appLogs: [] };
-    }
+    if (Array.isArray(raw)) return { users: raw, appUsers: [], appLogs: [] };
     const pick = (root,k)=>
       Array.isArray(root?.[k]) ? root[k] :
       Array.isArray(root?.data?.[k]) ? root.data[k] :
@@ -53,7 +39,7 @@
     };
   }
 
-  // --- PREFILL FROM REAL localStorage (login-ის სწრაფი მუშაობისთვის) ---
+  // Prefill cache from real LS (login-ის სწრაფი მუშაობისთვის)
   try {
     const u0 = safeParse(localStorage.getItem('users'),    []);
     const a0 = safeParse(localStorage.getItem('appUsers'), []);
@@ -63,18 +49,20 @@
     if (Array.isArray(l0)) cache.appLogs  = l0;
   } catch {}
 
-  // --- PULL FROM SERVER ONCE ---
+  // ერთხელ სერვერიდან წამოღება
   async function pullFromServer() {
     const raw = await fetchJSON(`${WORKER_BASE}/get-users`, { method: 'GET' });
     const s = shape(raw || {});
-    cache.users    = asArray(s.users);
-    cache.appUsers = asArray(s.appUsers);
-    cache.appLogs  = asArray(s.appLogs);
+    // თუ სერვერმა რაღაც მოიტანა, ქეში შევავსოთ; თუ ცარიელია, დავტოვოთ მიმდინარე ქეში (შეიძლება LS-იდანაა)
+    const u = asArray(s.users);    if (u.length) cache.users = u;
+    const a = asArray(s.appUsers); if (a.length) cache.appUsers = a;
+    const l = asArray(s.appLogs);  if (l.length) cache.appLogs = l;
+
     ready = true;
     document.dispatchEvent(new CustomEvent('server-storage-ready'));
   }
 
-  // Worker /save-users ხშირად ელოდება users.json-ში სუფთა მასივს.
+  // Worker /save-users ელოდება სუფთა users მასივს
   function bodyForSave() {
     return JSON.stringify(Array.isArray(cache.users) ? cache.users : []);
   }
@@ -94,53 +82,63 @@
     }
   }
 
-  // --- PATCH localStorage METHODS (ONLY FOR OUR KEYS) ---
+  // --- Override localStorage methods მხოლოდ ჩვენს გასაღებებზე ---
   const _getItem    = localStorage.getItem.bind(localStorage);
   const _setItem    = localStorage.setItem.bind(localStorage);
   const _removeItem = localStorage.removeItem.bind(localStorage);
   const _clear      = localStorage.clear.bind(localStorage);
 
+  function isEmptyArrJson(s) {
+    if (typeof s !== 'string') return true;
+    try { const j = JSON.parse(s); return !(Array.isArray(j) && j.length); } catch { return true; }
+  }
+
   localStorage.getItem = function(key) {
     if (!KEYS.has(key)) return _getItem(key);
-    // სანამ სერვერიდან წამოიღებს, დააბრუნე ნატურალური localStorage — რომ login/ჭაჭანი იმუშავოს
+
+    // fallback სანამ სერვერი მზადდება
     if (!ready) return _getItem(key);
-    if (key === 'users')     return JSON.stringify(cache.users);
-    if (key === 'appUsers')  return JSON.stringify(cache.appUsers);
-    if (key === 'logs')      return JSON.stringify(cache.appLogs);
+
+    // ready-ის მერე: თუ ქეში ცარიელია, დავუბრუნოთ ნატურალური LS, რომ ძველი ნაკადი არ გაწყდეს
+    if (key === 'users')    { if (!cache.users.length)    return _getItem('users');    return JSON.stringify(cache.users); }
+    if (key === 'appUsers') { if (!cache.appUsers.length) return _getItem('appUsers'); return JSON.stringify(cache.appUsers); }
+    if (key === 'logs')     { if (!cache.appLogs.length)  return _getItem('logs');     return JSON.stringify(cache.appLogs); }
+
     return null;
   };
 
   localStorage.setItem = function(key, value) {
     if (!KEYS.has(key)) return _setItem(key, value); // სხვა გასაღებებს არ ვეხებით
+
     try {
       const arr = asArray(safeParse(value, []));
-      if (key === 'users')     cache.users = arr;
+      if (key === 'users')       cache.users    = arr;
       else if (key === 'appUsers') cache.appUsers = arr;
-      else if (key === 'logs') cache.appLogs = arr;
-      // არ ვწერთ ნამდვილ localStorage-ში — სერვერზე ვინახავთ
-      pushToServerDebounced();
-    } catch {
-      // ჩუმად იგნორი
-    }
-    // native setItem არაფერი არ აბრუნებს
+      else if (key === 'logs')     cache.appLogs  = arr;
+
+      // არ ვწერთ ნამდვილ localStorage-ში ამ გასაღებებისთვის; მხოლოდ სერვერზე
+      // შენახვა ეხლა მხოლოდ users-ზეა გათვლილი (Worker შესაბამისია)
+      if (key === 'users') pushToServerDebounced();
+    } catch { /* ignore */ }
   };
 
   localStorage.removeItem = function(key) {
     if (!KEYS.has(key)) return _removeItem(key);
-    if (key === 'users')     cache.users = [];
-    if (key === 'appUsers')  cache.appUsers = [];
-    if (key === 'logs')      cache.appLogs = [];
-    pushToServerDebounced();
+    if (key === 'users')    cache.users = [];
+    if (key === 'appUsers') cache.appUsers = [];
+    if (key === 'logs')     cache.appLogs = [];
+    // სერვერზე მხოლოდ users იწერება
+    if (key === 'users') pushToServerDebounced();
   };
 
   localStorage.clear = function() {
-    // მთლიან ნატურალურ LS-ს არ ვშლით, მხოლოდ ჩვენს cache-ს ვაცხრილავთ და სერვერზე ვინახავთ
+    // ნატურალურ LS-ს არ ვწავშლით მთლიანად; მხოლოდ ჩვენს ქეშს ვაცარიელებთ
     cache.users = [];
     cache.appUsers = [];
     cache.appLogs = [];
-    pushToServerDebounced();
+    pushToServerDebounced(); // მხოლოდ users მიდის სერვერზე
   };
 
-  // --- start ---
-  pullFromServer(); // 1-ჯერ, ჩუმად
+  // სტარტზე ჩავქაჩოთ სერვერიდან
+  pullFromServer();
 })();
