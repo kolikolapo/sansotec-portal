@@ -18,14 +18,20 @@
 }
 
 *{box-sizing:border-box}
-html,body{height:100%; margin:0; padding:0;}
-body{
-  /* შუა background — ატვირთული ფოტო */
-  background: #e9eef4 url('Login Background.png') center/cover no-repeat fixed;
-  color:var(--ink);
-  font-family:"Myriad Pro","Segoe UI", Roboto, Arial, sans-serif;
-  display:flex; flex-direction:column; min-height:100vh;
+html,body{height:100%; margin:0; padding:0; color:var(--ink); font:16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Arial, Helvetica, "Apple Color Emoji", "Segoe UI Emoji"; background:var(--bg)}
+a{color:inherit; text-decoration:none}
+button{cursor:pointer}
+
+/* Header */
+.header{
+  position:sticky; top:0; z-index:10;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 18px; background:var(--surface); border-bottom:1px solid #eaeaea;
 }
+.header .brand{display:flex; align-items:center; gap:10px}
+.header .brand img{width:42px; height:42px; border-radius:12px; object-fit:cover; box-shadow:var(--shadow-sm)}
+.header .brand .t1{font-weight:700}
+.header .brand .t2{color:#666; font-size:13px}
 
 /* ===== Main area to center the card ===== */
 .main{
@@ -42,126 +48,51 @@ body{
   background:var(--surface);
   border-radius:var(--r);
   box-shadow:var(--shadow-lg);
-  position:relative;
-  overflow:hidden;
+  border:1px solid #eee;
 }
-
-/* Header */
 .card-head{
-  background:#282828;
-  color:#fff;
-  padding:12px 20px 20px;
-  display:flex;
-  align-items:center;
-  gap:16px;
+  padding:22px 24px 0;
+  display:flex; align-items:center; gap:12px; justify-content:center; flex-wrap:wrap;
 }
-.card-head img{
-  width:80px; height:80px; object-fit:contain;
+.card-head img{width:58px; height:58px; border-radius:14px; object-fit:cover; box-shadow:var(--shadow-sm)}
+.card-head h1{font-size:20px; margin:10px 0 2px 0}
+.card-head p{margin:0 0 10px 0; color:#666; font-size:13.5px}
+
+.card-body{ padding:14px 24px 24px; }
+.form-row{display:flex; flex-direction:column; gap:8px; margin:10px 0 14px}
+.label{font-size:13px; color:#555}
+.input{
+  display:flex; align-items:center; gap:10px;
+  border:1px solid #ddd; border-radius:12px; background:#fafafa;
+  padding:10px 12px;
 }
-.card-title{
-  font-size:20px;
-  font-weight:bold;
+.input input{
+  border:none; outline:none; background:transparent; width:100%;
+  font-size:15px; padding:2px;
+}
+.input .suffix-btn{
+  border:none; background:#efefef; border-radius:8px; padding:6px 10px; font-size:13px;
 }
 
-/* Body */
-.card-body{
-  margin-top:-10px;
-  background:#fff;
-  border-top-left-radius:20px; border-top-right-radius:20px;
-  padding:20px 18px 18px;
+.actions{display:flex; align-items:center; justify-content:space-between; margin-top:8px}
+.actions .remember{ display:flex; align-items:center; gap:8px; font-size:14px; color:#555 }
+.btn{
+  border:none; border-radius:12px; padding:10px 14px; background:var(--primary); color:white; font-weight:600;
+  box-shadow:var(--shadow-sm);
 }
-label{ font-weight:600; color:#333; display:block; margin-top:10px; }
-.input-wrap{ position:relative; margin-top:6px; }
-input[type="text"], input[type="password"]{
-  width:100%; padding:12px 44px 12px 12px;
-  border:1px solid #e5e7eb; border-radius:12px; outline:none;
-  box-shadow:var(--shadow-sm); transition:.15s; font-size:14px; color:#282828;
-}
-input:focus{ border-color:var(--primary); box-shadow:0 0 0 4px var(--ring); }
-.toggle-eye{
-  position:absolute; right:10px; top:50%; transform:translateY(-50%);
-  border:none; background:transparent; cursor:pointer; color:#6b6b6b; font-size:13px;
-}
-.row{ display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
-.row .remember{ display:flex; align-items:center; gap:8px; color:#3a3a3a; font-size:13px; }
-.row a{ color:#282828; text-decoration:none; font-size:13px; opacity:.8; }
-.row a:hover{ opacity:1; text-decoration:underline; }
+.btn:hover{ background:var(--primary-700) }
 
-button.login{
-  margin-top:12px; width:100%; padding:12px 16px;
-  border:none; border-radius:999px; cursor:pointer;
-  background:#282828; color:#fff; font-weight:700; font-size:15px;
-  box-shadow:0 10px 22px rgba(40,40,40,.25);
-  transition:.15s;
+.error{
+  display:none;
+  margin:10px 0 0;
+  background:#fee2e2; color:#7f1d1d; border:1px solid #fecaca; border-radius:10px; padding:10px 12px; font-size:14px;
 }
-button.login:hover{ background:#1f1f1f; transform: translateY(-1px); }
 
-.error{ margin-top:10px; color:#c62828; font-size:13px; display:none; }
-.note{ text-align:center; color:#6b7280; font-size:12px; margin-top:8px; }
-
-/* ===== Footer (ONLY) ===== */
+/* Footer */
 footer{
-  background:#282828;
-  color:#fff;
-  width:100%;
+  padding:20px 16px 28px; color:#777; font-size:13px; display:flex; align-items:center; justify-content:center
 }
-.footer-inner{
-  max-width:1100px;
-  margin:0 auto;
-  padding:22px 20px;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:28px;
-  flex-wrap:wrap;
-}
-.footer-col{
-  display:flex; flex-direction:column; align-items:flex-start; gap:8px;
-  min-width:180px;
-}
-.footer-logo{
-  display:flex; align-items:center; justify-content:flex-start;
-  padding-left:14px;
-}
-.footer-logo img{
-  width:120px; height:auto;
-}
-.footer-title{
-  font-weight:700; font-size:13px; letter-spacing:.4px; opacity:.95;
-  text-transform:uppercase;
-  margin-top:4px;
-}
-.footer-links a{
-  color:#fff; text-decoration:none; font-size:14px; opacity:.95;
-  display:block;
-}
-.footer-links a:hover{ text-decoration:underline; }
-.footer-phones span{
-  font-size:14px; display:block;
-}
-
-/* Social buttons */
-.footer-social{
-  display:flex; flex-direction:column; gap:10px;
-}
-.footer-social .btn-social{
-  display:inline-flex; align-items:center; gap:10px;
-  background:rgba(255,255,255,0.1);
-  padding:8px 12px; border-radius:8px;
-  color:#fff; text-decoration:none; font-weight:600; font-size:14px;
-  transition:.15s;
-}
-.footer-social .btn-social:hover{ background:rgba(255,255,255,0.22); }
-.footer-social .btn-social img{
-  width:22px; height:22px; object-fit:contain; display:block;
-  background:none; border:none; box-shadow:none; outline:none;
-}
-
-@media (max-width:640px){
-  .footer-inner{ justify-content:flex-start; gap:22px; }
-  .footer-col{ min-width:160px; }
-  .card-head img{ width:64px; height:64px; }
-}
+footer a{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -171,86 +102,53 @@ footer{
   <div class="card" role="dialog" aria-labelledby="title">
     <div class="card-head">
       <img src="SANSO.jpg" alt="Sanso">
-      <div class="card-title" id="title">Sanso Technical Department</div>
+      <div>
+        <h1 id="title">Sanso Technical Department</h1>
+        <p>შესვლა პორტალში</p>
+      </div>
     </div>
-
     <div class="card-body">
-      <label for="username">მომხმარებელი</label>
-      <div class="input-wrap">
-        <input id="username" type="text" placeholder="შეიყვანე მომხმარებელი" autocomplete="username" autofocus>
+      <div class="form-row">
+        <div class="label">მომხმარებელი</div>
+        <div class="input">
+          <input id="username" type="text" autocomplete="username" placeholder="შეიყვანე მომხმარებელი">
+        </div>
       </div>
 
-      <label for="password">პაროლი</label>
-      <div class="input-wrap">
-        <input id="password" type="password" placeholder="შეიყვანე პაროლი" autocomplete="current-password">
-        <button class="toggle-eye" type="button" onclick="togglePassword()">აჩვენე</button>
+      <div class="form-row">
+        <div class="label">პაროლი</div>
+        <div class="input">
+          <input id="password" type="password" autocomplete="current-password" placeholder="შეიყვანე პაროლი">
+          <button id="togglePasswordBtn" class="suffix-btn" onclick="togglePassword()">აჩვენე</button>
+        </div>
       </div>
 
-      <div class="row">
+      <div class="actions">
         <label class="remember">
           <input id="remember" type="checkbox"> დამიმახსოვრე
         </label>
-        <a href="#" onclick="alert(' გთხოვ, დაუკავშირდი ადმინისტრატორს. '); return false;">დამავიწყდა პაროლი</a>
+        <button class="btn" onclick="doLogin()">შესვლა</button>
       </div>
 
-      <button class="login" onclick="doLogin()">შესვლა</button>
-      <div id="error" class="error">მომხმარებელი ან პაროლი არასწორია.</div>
-
-      <div class="note">ტესტური მომხმარებლები ავტომატურადაა გაწერილი.</div>
+      <div id="error" class="error">არასწორი მომხმარებელი ან პაროლი</div>
     </div>
   </div>
 </div>
 
 <footer>
-  <div class="footer-inner">
-    <!-- Column 1: Logo -->
-    <div class="footer-col footer-logo">
-      <img src="SANSO.jpg" alt="Sanso Logo">
-    </div>
-
-    <!-- Column 2: Websites -->
-    <div class="footer-col">
-      <div class="footer-title">ვებ გვერდები</div>
-      <div class="footer-links">
-        <a href="https://www.sanso.ge" target="_blank">www.sanso.ge</a>
-        <a href="https://www.soprano.ge" target="_blank">www.soprano.ge</a>
-      </div>
-    </div>
-
-    <!-- Column 3: Phones -->
-    <div class="footer-col">
-      <div class="footer-title">ტელეფონები</div>
-      <div class="footer-phones">
-        <span>+995 577 02 04 50</span>
-        <span>+995 577 10 49 00</span>
-      </div>
-    </div>
-
-    <!-- Column 4: Social -->
-    <div class="footer-col">
-      <div class="footer-title">WE ARE SOCIAL</div>
-      <div class="footer-social">
-        <a class="btn-social" href="https://www.facebook.com/SANSOCORPORATION" target="_blank" aria-label="Facebook">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" alt="Facebook">
-          Facebook
-        </a>
-        <a class="btn-social" href="https://www.instagram.com/sanso_inc/" target="_blank" aria-label="Instagram">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" alt="Instagram">
-          Instagram
-        </a>
-      </div>
-    </div>
-  </div>
+  <div>© Sanso • <a href="https://sansotec.ge" target="_blank" rel="noopener">sansotec.ge</a></div>
 </footer>
 
-<script>
-/* Seed users */
-(function seedUsers(){
-  const USERS_SEED_VERSION = "v2";
-  const versionKey = "appUsersVersion";
-  const usersKey   = "appUsers";
+<!-- DATA STORE (server-backed) -->
+<script src="/js/data-store.js"></script>
 
-  const desired = [
+<!-- LOGIN LOGIC (no localStorage; only server) -->
+<script>
+(async () => {
+  await DataStore.init();
+
+  // --- Seed appUsers თუ სერვერზე ჯერ ცარიელია ---
+  const seed = [
     { username:"admin",  password:"admin",  role:"Admin",      fullName:"ადმინი" },
     { username:"sandro", password:"sandro", role:"Viewer",     fullName:"სანდრო" },
     { username:"giorgi", password:"giorgi", role:"Viewer",     fullName:"გიორგი" },
@@ -258,97 +156,52 @@ footer{
     { username:"vaxo",   password:"vaxo",   role:"Technician", fullName:"ვახო"   }
   ];
 
-  const currentVersion = localStorage.getItem(versionKey);
-  if (!currentVersion || currentVersion !== USERS_SEED_VERSION) {
-    localStorage.setItem(usersKey, JSON.stringify(desired));
-    localStorage.setItem(versionKey, USERS_SEED_VERSION);
-  } else if (!localStorage.getItem(usersKey)) {
-    localStorage.setItem(usersKey, JSON.stringify(desired));
+  let appUsers = await DataStore.getAppUsers();
+  if (!Array.isArray(appUsers) || appUsers.length === 0) {
+    await DataStore.saveAppUsers(seed);
+    appUsers = seed;
   }
-})();
 
-function togglePassword(){
-  const ip = document.getElementById("password");
-  const btn = event.currentTarget;
-  if(ip.type === "password"){ ip.type = "text"; btn.textContent = "დამალე"; }
-  else { ip.type = "password"; btn.textContent = "აჩვენე"; }
-}
-document.addEventListener("keydown", (e)=>{ if(e.key === "Enter") doLogin(); });
-
-function doLogin(){
-  const u = document.getElementById("username").value.trim();
-  const p = document.getElementById("password").value;
-  const remember = document.getElementById("remember").checked;
-  const errorEl = document.getElementById("error");
-
-  const users = JSON.parse(localStorage.getItem("appUsers")||"[]");
-  const found = users.find(x => x.username === u && x.password === p);
-
-  if(!found){ errorEl.style.display = "block"; return; }
-
-  const currentUser = {
-    username: found.username,
-    role: found.role,
-    fullName: found.fullName || found.username,
-    loginAt: new Date().toISOString(),
-    remember
+  // პაროლის ჩვენება/დამალვა (არსებულ დიზაინზე ზემოქმედების გარეშე)
+  window.togglePassword = function(){
+    const ip = document.getElementById("password");
+    const btn = document.getElementById("togglePasswordBtn");
+    if (!ip || !btn) return;
+    if (ip.type === "password"){ ip.type = "text"; btn.textContent = "დამალე"; }
+    else { ip.type = "password"; btn.textContent = "აჩვენე"; }
   };
-  localStorage.setItem("currentUser", JSON.stringify(currentUser));
 
-  // ✅ Login-ის ლოგირება
-  const logs = JSON.parse(localStorage.getItem("appLogs")||"[]");
-  logs.unshift({ user: found.username, action:"Login", time:new Date().toLocaleString("ka-GE") });
-  localStorage.setItem("appLogs", JSON.stringify(logs));
+  // Enter ღილაკზე ლოგინი
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Enter') doLogin(); });
 
-  window.location.href = "main.html";
-}
+  // --- ავტორიზაცია (მხოლოდ სერვერზე არსებული appUsers) ---
+  window.doLogin = async function(){
+    const u = document.getElementById("username")?.value?.trim() || "";
+    const p = document.getElementById("password")?.value || "";
+    const remember = document.getElementById("remember")?.checked || false;
+    const err = document.getElementById("error");
+
+    const list = await DataStore.getAppUsers();
+    const found = list.find(x => x.username === u && x.password === p);
+    if (!found){ if(err) err.style.display='block'; return; }
+
+    DataStore.setCurrentUser({
+      username: found.username,
+      role: found.role,
+      fullName: found.fullName || found.username,
+      loginAt: new Date().toISOString(),
+      remember
+    });
+
+    // ლოგი (სერვერზე ინახება)
+    const logs = await DataStore.getLogs();
+    logs.unshift({ user: found.username, action:"Login", time:new Date().toLocaleString("ka-GE") });
+    await DataStore.saveLogs(logs);
+
+    window.location.href = "main.html";
+  };
+})();
 </script>
-
-<script src="/js/server-store.js"></script>
-
-<script>
-  // ჩატვირთვაზე: appUsers სერვერიდან localStorage-ში ჩაიწეროს,
-  // რომ შენმა არსებულმა ლოგინმა კვლავ უცვლელად იმუშაოს
-  document.addEventListener('DOMContentLoaded', async () => {
-    try {
-      const remoteAppUsers =
-        (window.ServerStore && ServerStore.getAppUsers)
-          ? await ServerStore.getAppUsers()
-          : [];
-      if (Array.isArray(remoteAppUsers) && remoteAppUsers.length) {
-        localStorage.setItem('appUsers', JSON.stringify(remoteAppUsers));
-      } else {
-        // თუ სერვერზე ჯერ ცარიელია, მიეცი შანსი შენს seed-ს ჩაიწეროს,
-        // და მერე ეგვე აიტანე სერვერზე
-        setTimeout(async () => {
-          try {
-            const seeded = JSON.parse(localStorage.getItem('appUsers') || '[]');
-            if (Array.isArray(seeded) && seeded.length && ServerStore.saveAppUsers) {
-              await ServerStore.saveAppUsers(seeded);
-            }
-          } catch {}
-        }, 500);
-      }
-
-      // ნებისმიერ setItem('appUsers', ...) შემდეგ — ჩუმი push სერვერზე (debounce)
-      const _set = localStorage.setItem.bind(localStorage);
-      localStorage.setItem = function (k, v) {
-        _set(k, v);
-        if (k === 'appUsers' && window.ServerStore && ServerStore.saveAppUsers) {
-          clearTimeout(localStorage.__appUsersPushT);
-          localStorage.__appUsersPushT = setTimeout(async () => {
-            try {
-              const cur = JSON.parse(localStorage.getItem('appUsers') || '[]');
-              await ServerStore.saveAppUsers(cur);
-            } catch {}
-          }, 300);
-        }
-      };
-    } catch {}
-  });
-</script>
-
-
 
 </body>
 </html>

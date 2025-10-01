@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>სტატისტიკა</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 body {
   margin:0; padding:0;
@@ -14,234 +15,334 @@ body {
 .sidebar {
   width:200px;
   background:#282828;
-  color:white;
+  color:#fff;
   min-height:100vh;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
+  display:flex; flex-direction:column;
 }
-.sidebar img {
-  width:100px;
-  margin:20px 0;
-  border-radius:8px;
+.sidebar .brand {
+  display:flex; align-items:center; gap:10px;
+  padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.1);
 }
+.sidebar .brand img{ width:40px; height:40px; object-fit:cover; border-radius:8px; }
+.sidebar .brand .t1{ font-weight:700; }
+.sidebar .brand .t2{ opacity:.8; font-size:12px; }
 .sidebar a {
-  color:white;
-  text-decoration:none;
-  padding:12px 16px;
-  font-size:14px;
-  width:100%;
-  display:block;
-  text-align:left;
-  border-bottom:1px solid rgba(255,255,255,0.08);
-  transition:background .2s;
+  color:#fff; text-decoration:none; padding:12px 16px; display:block;
+  border-bottom:1px solid rgba(255,255,255,.06);
 }
-.sidebar a:hover { background:rgba(255,255,255,0.12); }
-.sidebar a.active { background:rgba(255,255,255,0.25); }
+.sidebar a:hover{ background:rgba(255,255,255,.08); }
+.sidebar .spacer{ flex:1; }
+.sidebar .logout{ background:#111; }
 
-/* Content wrapper */
-.content {
-  flex:1;
-  display:flex;
-  flex-direction:column;
+/* Main */
+.main { flex:1; display:flex; flex-direction:column; gap:14px; }
+header {
+  background:#fff; border-bottom:1px solid #eee; padding:12px 16px;
+  display:flex; align-items:center; justify-content:space-between;
 }
+header .left{ display:flex; align-items:center; gap:10px; }
+header .title{ font-weight:700; }
 
-/* Top Banner */
-.topbar {
-  background:#282828;
-  color:white;
-  padding:14px 20px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-}
-.topbar .title {
-  font-size:18px;
-  font-weight:bold;
-}
-.topbar .badges {
-  display:flex;
-  gap:12px;
-}
-.topbar .badge {
-  background:rgba(255,255,255,0.12);
-  border:1px solid rgba(255,255,255,0.35);
-  padding:6px 10px;
-  border-radius:8px;
-  font-size:13px;
-}
+.container{ padding:16px; display:grid; gap:16px; grid-template-columns: 1fr; }
 
-.container { width:95%; max-width:1100px; margin:24px auto; }
-.card { background:white; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1); padding:16px; margin-bottom:18px; }
-.card h2 { margin:0 0 10px 0; font-size:18px; color:#282828; }
-table { width:100%; border-collapse:collapse; background:white; border-radius:6px; overflow:hidden; }
-th, td { padding:10px; border-bottom:1px solid #eee; text-align:left; font-size:14px; }
-th { background:#f7f7f7; font-weight:600; color:#282828; }
-tr:hover { background:#fafafa; }
-.right { text-align:right; }
+/* Cards */
+.card{ background:#fff; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+.card-head{ padding:12px 16px; background:#282828; color:#fff; display:flex; align-items:center; justify-content:space-between; }
+.card-body{ padding:16px; }
+
+.kpi { display:grid; grid-template-columns: repeat(4, minmax(160px,1fr)); gap:12px; }
+.kpi .item{ background:#fafafa; border:1px solid #eee; border-radius:12px; padding:14px; }
+.kpi .item .lbl{ color:#555; font-size:13px; margin-bottom:6px; }
+.kpi .item .val{ font-size:20px; font-weight:700; }
+
+/* Table */
+.table-wrap{ overflow:auto; border:1px solid #eee; border-radius:10px; }
+table{ border-collapse:collapse; width:100%; background:#fff; }
+th, td{ border-bottom:1px solid #eee; padding:10px 12px; text-align:left; }
+tr:hover{ background:#fafafa; }
+
+/* Filters */
+.filters{ display:grid; grid-template-columns: repeat(4, minmax(140px,1fr)); gap:10px; margin:10px 0 4px; }
+.filters select, .filters input{
+  width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:10px; outline:none;
+}
+.btn{ background:#282828; color:#fff; border:none; padding:8px 12px; border-radius:10px; cursor:pointer; }
+.btn:hover{ background:#1f1f1f; }
+.badge{ background:#111; color:#fff; border-radius:10px; padding:6px 10px; font-size:13px; }
 </style>
 </head>
 <body>
 
 <!-- Sidebar -->
-<div class="sidebar">
-  <img src="SANSO.jpg" alt="Sanso Logo">
-  <a href="main.html">🏠 მთავარი გვერდი</a>
-  <a href="stats.html" class="active">📊 სტატისტიკა</a>
-  <a href="settings.html" id="settingsLink">⚙️ პარამეტრები</a>
-  <a href="#" onclick="logout()">🚪 გასვლა</a>
-</div>
-
-<!-- Content -->
-<div class="content">
-  <div class="topbar">
-    <div class="title">Sanso Technical Department</div>
-    <div class="badges">
-      <div class="badge">სულ ვიზიტები: <strong id="totalVisits">0</strong></div>
-      <div class="badge">სულ შემოსავალი: <strong id="totalRevenue">0 ₾</strong></div>
-    </div>
+<nav class="sidebar">
+  <div class="brand">
+      <img src="SANSO.jpg" alt="Sanso">
+      <div>
+        <div class="t1">Sanso Technical</div>
+        <div class="t2">Service Portal</div>
+      </div>
   </div>
+  <a href="main.html">მთავარი</a>
+  <a href="stats.html">სტატისტიკა</a>
+  <a id="settingsLink" href="settings.html">პარამეტრები</a>
+  <a id="profileLink" href="profile.html" style="display:none">პროფილი</a>
+  <div class="spacer"></div>
+  <a class="logout" href="javascript:void(0)" onclick="logout()">გასვლა</a>
+</nav>
+
+<!-- Main -->
+<div class="main">
+  <header>
+    <div class="left">
+      <div class="title">სტატისტიკა</div>
+      <span id="periodBadge" class="badge">—</span>
+    </div>
+    <div></div>
+  </header>
 
   <div class="container">
+
+    <!-- KPIs -->
     <div class="card">
-      <h2>ვიზიტები — თვეების მიხედვით</h2>
-      <table id="visitsByMonth">
-        <thead><tr><th>თვე</th><th>ვიზიტები</th></tr></thead>
-        <tbody></tbody>
-      </table>
+      <div class="card-head">
+        <div>მოკლე მაჩვენებლები</div>
+      </div>
+      <div class="card-body">
+        <div class="filters">
+          <input id="dateFrom" type="date">
+          <input id="dateTo" type="date">
+          <select id="purposeFilter">
+            <option value="">დანიშნულება (ყველა)</option>
+            <option>წმენდა</option>
+            <option>გამოძახება</option>
+            <option>ფილტრები</option>
+            <option>თავაკის შეკეთება</option>
+          </select>
+          <input id="techFilter" type="text" placeholder="ტექნიკოსი">
+        </div>
+
+        <div class="kpi" style="margin-top:8px;">
+          <div class="item">
+            <div class="lbl">სერვისების რაოდენობა</div>
+            <div id="kpiCount" class="val">0</div>
+          </div>
+          <div class="item">
+            <div class="lbl">საშ. ფასი (₾)</div>
+            <div id="kpiAvg" class="val">0.00</div>
+          </div>
+          <div class="item">
+            <div class="lbl">ჯამური შემოსავალი (₾)</div>
+            <div id="kpiSum" class="val">0.00</div>
+          </div>
+          <div class="item">
+            <div class="lbl">უნიკალური კლიენტები</div>
+            <div id="kpiClients" class="val">0</div>
+          </div>
+        </div>
+      </div>
     </div>
 
+    <!-- Services table -->
     <div class="card">
-      <h2>ვიზიტები — წლების მიხედვით</h2>
-      <table id="visitsByYear">
-        <thead><tr><th>წელი</th><th>ვიზიტები</th></tr></thead>
-        <tbody></tbody>
-      </table>
+      <div class="card-head">
+        <div>ვიზიტების ჩამონათვალი</div>
+        <button class="btn" onclick="exportCsv()">CSV ექსპორტი</button>
+      </div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table id="tbl">
+            <thead>
+              <tr>
+                <th>თარიღი</th>
+                <th>კლიენტი</th>
+                <th>დანიშნულება</th>
+                <th>დოკუმენტი</th>
+                <th>ფასი (₾)</th>
+                <th>ტექნიკოსი</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
-    <div class="card">
-      <h2>შემოსავალი (₾) — თვეების მიხედვით</h2>
-      <table id="revenueByMonth">
-        <thead><tr><th>თვე</th><th>შემოსავალი</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
-
-    <div class="card">
-      <h2>შემოსავალი (₾) — წლების მიხედვით</h2>
-      <table id="revenueByYear">
-        <thead><tr><th>წელი</th><th>შემოსავალი</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
   </div>
 </div>
 
+<!-- Data Store -->
+<script src="/js/data-store.js"></script>
+
+<!-- Logic (server-backed) -->
 <script>
-/* Role helpers */
-function getRole(){
-  const cu = JSON.parse(localStorage.getItem("currentUser")||"null");
-  return cu?.role || "Viewer";
-}
+function getCurrentUser(){ return DataStore.getCurrentUser(); }
+function getRole(){ return getCurrentUser()?.role || "Viewer"; }
 function isAdmin(){ return getRole()==="Admin"; }
-function isTech(){ return getRole()==="Technician"; }
-function isViewer(){ return getRole()==="Viewer"; }
 
-function updateUIByRole(){
+let users = [];
+let flat = []; // გაბრტყელებული სერვისების სია {date, customerId, customerName, purpose, doc, price, technician}
+
+(async function init(){
+  await DataStore.init();
+
+  const cu = DataStore.getCurrentUser();
+  if (!cu){ window.location.href="login.html"; return; }
+
+  // Sidebar visibility
   const settingsLink = document.getElementById("settingsLink");
-  if (isTech()) {
-    settingsLink.style.display = "none";
-  } else if (isViewer()) {
-    settingsLink.style.display = "none";
-  } else if (isAdmin()) {
-    settingsLink.style.display = "block";
+  const profileLink  = document.getElementById("profileLink");
+  if (settingsLink && profileLink){
+    if (isAdmin()){ settingsLink.style.display="block"; profileLink.style.display="none"; }
+    else { settingsLink.style.display="none"; profileLink.style.display="block"; }
   }
-}
-updateUIByRole();
 
-/* Data */
-const users = JSON.parse(localStorage.getItem("users")) || [];
-const services = users.flatMap(u => (u.services || []).map(s => ({...s})));
+  users = await DataStore.getUsers();
+  flat = flattenServices(users);
 
-function parsePrice(val){
-  const num = parseFloat(val);
-  return isNaN(num) ? 0 : num;
-}
-function monthKey(dateStr){
-  if(!dateStr) return null;
-  const m = dateStr.match(/^(\d{4})-(\d{2})/);
-  return m ? `${m[1]}-${m[2]}` : null;
-}
-function yearKey(dateStr){
-  if(!dateStr) return null;
-  const m = dateStr.match(/^(\d{4})/);
-  return m ? m[1] : null;
+  // default period: მიმდინარე თვე
+  setDefaultPeriodThisMonth();
+  render();
+})();
+
+function setDefaultPeriodThisMonth(){
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+  const from = new Date(y, m, 1);
+  const to   = new Date(y, m+1, 0);
+  document.getElementById('dateFrom').value = toISO(from);
+  document.getElementById('dateTo').value   = toISO(to);
+  updatePeriodBadge(from, to);
 }
 
-const visitsByMonth = {};
-const visitsByYear = {};
-const revenueByMonth = {};
-const revenueByYear = {};
+function toISO(d){ const m = (d.getMonth()+1).toString().padStart(2,'0'); const day = d.getDate().toString().padStart(2,'0'); return `${d.getFullYear()}-${m}-${day}`; }
+function parseDate(s){ const d = new Date(s); return isNaN(d) ? null : d; }
 
-let totalVisits = 0;
-let totalRevenue = 0;
-
-services.forEach(s=>{
-  const mk = monthKey(s.date);
-  const yk = yearKey(s.date);
-  const price = parsePrice(s.price);
-
-  if(mk){
-    visitsByMonth[mk] = (visitsByMonth[mk] || 0) + 1;
-    revenueByMonth[mk] = (revenueByMonth[mk] || 0) + price;
-  }
-  if(yk){
-    visitsByYear[yk] = (visitsByYear[yk] || 0) + 1;
-    revenueByYear[yk] = (revenueByYear[yk] || 0) + price;
-  }
-  totalVisits += 1;
-  totalRevenue += price;
-});
-
-const gel = new Intl.NumberFormat('ka-GE', {minimumFractionDigits:2, maximumFractionDigits:2});
-
-function sortMonthKeys(keys){
-  return keys.sort((a,b)=> new Date(a+"-01") - new Date(b+"-01"));
-}
-function sortYearKeys(keys){
-  return keys.sort((a,b)=> parseInt(a) - parseInt(b));
+function updatePeriodBadge(from, to){
+  const el = document.getElementById('periodBadge');
+  if (!el) return;
+  el.textContent = `${toISO(from)} → ${toISO(to)}`;
 }
 
-function renderTable(tableId, dataObj, isMoney=false, sorter){
-  const tbody = document.getElementById(tableId).tBodies[0];
-  tbody.innerHTML = "";
-  const keys = sorter(Object.keys(dataObj));
-  keys.forEach(k=>{
-    const tr = document.createElement("tr");
-    const val = dataObj[k];
-    tr.innerHTML = `<td>${k}</td><td class="right">${isMoney ? gel.format(val) : val}</td>`;
-    tbody.appendChild(tr);
+function flattenServices(users){
+  const out = [];
+  (users||[]).forEach(u=>{
+    const name = u.name || u.id || '';
+    (u.services||[]).forEach(s=>{
+      out.push({
+        date: s.date || '',
+        customerId: u.id || '',
+        customerName: name,
+        purpose: s.purpose || '',
+        doc: s.doc || '',
+        price: Number(s.price || 0),
+        technician: s.technician || ''
+      });
+    });
+  });
+  return out.sort((a,b)=> (a.date > b.date ? -1 : 1));
+}
+
+function render(){
+  const pf = document.getElementById('purposeFilter').value;
+  const tf = (document.getElementById('techFilter').value || '').trim().toLowerCase();
+  const df = parseDate(document.getElementById('dateFrom').value);
+  const dt = parseDate(document.getElementById('dateTo').value);
+  if (df && dt) updatePeriodBadge(df, dt);
+
+  const rows = flat.filter(x=>{
+    const dOk = (!df || new Date(x.date) >= df) && (!dt || new Date(x.date) <= dt);
+    const pOk = pf ? String(x.purpose) === pf : true;
+    const tOk = tf ? String(x.technician).toLowerCase().includes(tf) : true;
+    return dOk && pOk && tOk;
+  });
+
+  // KPIs
+  const cnt = rows.length;
+  const sum = rows.reduce((acc,x)=>acc+(isNaN(x.price)?0:x.price),0);
+  const avg = cnt ? (sum / cnt) : 0;
+  const uniqueClients = new Set(rows.map(x=>x.customerId||x.customerName)).size;
+
+  document.getElementById('kpiCount').textContent = String(cnt);
+  document.getElementById('kpiSum').textContent   = sum.toFixed(2);
+  document.getElementById('kpiAvg').textContent   = avg.toFixed(2);
+  document.getElementById('kpiClients').textContent = String(uniqueClients);
+
+  // Table
+  const tb = document.getElementById('tbody');
+  tb.innerHTML = '';
+  rows.forEach(r=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${escapeHtml(r.date)}</td>
+      <td>${escapeHtml(r.customerName)}</td>
+      <td>${escapeHtml(r.purpose)}</td>
+      <td>${escapeHtml(r.doc)}</td>
+      <td>${isNaN(r.price) ? "" : (r.price.toFixed(2))}</td>
+      <td>${escapeHtml(r.technician)}</td>
+    `;
+    tb.appendChild(tr);
   });
 }
 
-renderTable("visitsByMonth", visitsByMonth, false, sortMonthKeys);
-renderTable("visitsByYear", visitsByYear, false, sortYearKeys);
-renderTable("revenueByMonth", revenueByMonth, true, sortMonthKeys);
-renderTable("revenueByYear", revenueByYear, true, sortYearKeys);
+function escapeHtml(s){
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
 
-document.getElementById("totalVisits").textContent = totalVisits;
-document.getElementById("totalRevenue").textContent = gel.format(totalRevenue);
+/* Bind filters */
+document.addEventListener('input', (e)=>{
+  const ids = ['dateFrom','dateTo','purposeFilter','techFilter'];
+  if (ids.includes(e.target.id)) render();
+});
+
+/* CSV Export */
+function exportCsv(){
+  // current filtered rows
+  const pf = document.getElementById('purposeFilter').value;
+  const tf = (document.getElementById('techFilter').value || '').trim().toLowerCase();
+  const df = parseDate(document.getElementById('dateFrom').value);
+  const dt = parseDate(document.getElementById('dateTo').value);
+
+  const rows = flat.filter(x=>{
+    const dOk = (!df || new Date(x.date) >= df) && (!dt || new Date(x.date) <= dt);
+    const pOk = pf ? String(x.purpose) === pf : true;
+    const tOk = tf ? String(x.technician).toLowerCase().includes(tf) : true;
+    return dOk && pOk && tOk;
+  });
+
+  const header = ['date','customer','purpose','doc','price','technician'];
+  const lines = [header.join(',')].concat(
+    rows.map(r => [
+      csvCell(r.date),
+      csvCell(r.customerName),
+      csvCell(r.purpose),
+      csvCell(r.doc),
+      (isNaN(r.price) ? '' : r.price.toFixed(2)),
+      csvCell(r.technician)
+    ].join(','))
+  );
+  const blob = new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'services.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+function csvCell(s){
+  const v = String(s||'');
+  if (/[",\n]/.test(v)) return `"${v.replace(/"/g,'""')}"`;
+  return v;
+}
 
 /* Logout */
-function logout(){
-  const cu = JSON.parse(localStorage.getItem("currentUser"));
+async function logout(){
+  const cu = DataStore.getCurrentUser();
   if(cu){
-    const logs=JSON.parse(localStorage.getItem("appLogs")||"[]");
+    const logs = await DataStore.getLogs();
     logs.unshift({ user:cu.username, action:"Logout", time:new Date().toLocaleString("ka-GE") });
-    localStorage.setItem("appLogs",JSON.stringify(logs));
+    await DataStore.saveLogs(logs);
   }
-  localStorage.removeItem("currentUser");
-  window.location.href="login.html";
+  DataStore.clearCurrentUser();
+  window.location.href = "login.html";
 }
 </script>
 

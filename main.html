@@ -14,524 +14,450 @@ body {
 .sidebar {
   width:200px;
   background:#282828;
-  color:white;
+  color:#fff;
   min-height:100vh;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
+  display:flex; flex-direction:column;
 }
-.sidebar img {
-  width:100px;
-  margin:20px 0;
-  border-radius:8px;
+.sidebar .brand {
+  display:flex; align-items:center; gap:10px;
+  padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.1);
 }
+.sidebar .brand img{ width:40px; height:40px; object-fit:cover; border-radius:8px; }
+.sidebar .brand .t1{ font-weight:700; }
+.sidebar .brand .t2{ opacity:.8; font-size:12px; }
 .sidebar a {
-  color:white;
-  text-decoration:none;
-  padding:12px 16px;
-  font-size:14px;
-  width:100%;
-  display:block;
-  text-align:left;
-  border-bottom:1px solid rgba(255,255,255,0.08);
-  transition:background .2s;
+  color:#fff; text-decoration:none; padding:12px 16px; display:block;
+  border-bottom:1px solid rgba(255,255,255,.06);
 }
-.sidebar a:hover { background:rgba(255,255,255,0.12); }
-.sidebar a.active { background:rgba(255,255,255,0.25); }
+.sidebar a:hover{ background:rgba(255,255,255,.08); }
+.sidebar .spacer{ flex:1; }
+.sidebar .logout{ background:#111; }
 
-/* Content wrapper */
-.content {
-  flex:1;
-  display:flex;
-  flex-direction:column;
+.main {
+  flex:1; display:flex; flex-direction:column; gap:14px;
 }
 
-/* Top Banner */
-.topbar {
+header {
+  background:#fff; border-bottom:1px solid #eee; padding:12px 16px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+header .left{ display:flex; align-items:center; gap:10px; }
+header .title{ font-weight:700; }
+header .search{ display:flex; align-items:center; gap:8px; }
+header .search input{
+  border:1px solid #ddd; border-radius:10px; padding:8px 10px; outline:none;
+}
+header .cta{
+  display:flex; align-items:center; gap:10px;
+}
+.btn{ background:#282828; color:#fff; border:none; padding:8px 12px; border-radius:10px; cursor:pointer; }
+.btn:hover{ background:#1f1f1f; }
+.btn-small{ padding:6px 10px; border-radius:8px; border:none; cursor:pointer; }
+.btn-edit{ background:#0ea5e9; color:#fff; }
+.btn-delete{ background:#ef4444; color:#fff; }
+.badge { background:#111; color:#fff; border-radius:10px; padding:6px 10px; font-size:13px; }
+
+.container{
+  padding:16px;
+  display:grid; gap:16px;
+  grid-template-columns: 1fr;
+}
+
+.card{
+  background:var(--surface);
+  border-radius:var(--r);
+  box-shadow:var(--shadow-lg);
+  position:relative;
+  overflow:hidden;
+}
+
+.card-head{
   background:#282828;
-  color:white;
-  padding:14px 20px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
+  color:#fff;
+  padding:12px 20px 20px;
+  display:flex; align-items:center; justify-content:space-between;
 }
-.topbar .title {
-  font-size:18px;
-  font-weight:bold;
-}
-.topbar .badges {
-  display:flex;
-  gap:12px;
-}
-.topbar .badge {
-  background:rgba(255,255,255,0.12);
-  border:1px solid rgba(255,255,255,0.35);
-  padding:6px 10px;
-  border-radius:8px;
-  font-size:13px;
-}
+.card-head .t{ font-weight:700; }
+.card-body{ background:#fff; padding:14px; border:1px solid #eee; border-top:none; }
 
-/* Container */
-.container { width:90%; max-width:1200px; margin:20px auto; }
-.actions { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;}
-.actions button { padding:10px 15px; border:none; background:#282828; color:white; border-radius:6px; cursor:pointer;}
-.actions button:hover { background:#1f1f1f;}
-#searchInput { padding:8px; width:300px; border-radius:5px; border:1px solid #cfcfcf; color:#282828;}
-table { width:100%; border-collapse:collapse; background:white; border-radius:10px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.1);}
-table th, table td { padding:12px; text-align:left; border-bottom:1px solid #e7e7e7; font-size:14px;}
-table th { background:#efefef; color:#222;}
-tr:hover { background:#f7f7f7; cursor:pointer;}
-.btn-small { padding:5px 10px; border:none; border-radius:5px; cursor:pointer; font-size:13px; }
-.btn-edit { background:#b58900; color:white;}
-.btn-delete { background:#b00020; color:white;}
-.btn-edit:hover { filter:brightness(0.95);}
-.btn-delete:hover { filter:brightness(0.95); }
+.table-wrap{ overflow:auto; border:1px solid #eee; border-radius:10px; }
+table{ border-collapse:collapse; width:100%; background:#fff; }
+th, td{ border-bottom:1px solid #eee; padding:10px 12px; text-align:left; }
+tr:hover{ background:#fafafa; }
+.actionsCell{ display:flex; gap:6px; }
 
-/* Popup */
-.modal { display:none; position:fixed; z-index:999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5);}
-.modal-content { background:white; margin:5% auto; padding:24px; border-radius:10px; width:560px; max-width:92%; position:relative; box-shadow:0 5px 15px rgba(0,0,0,0.3);}
-.modal-content h3 { text-align:center; margin-top:0; color:#282828;}
-.modal-content label { display:block; margin-top:12px; }
-.modal-content input, .modal-content select { width:100%; padding:10px; margin-top:6px; margin-bottom:6px; border-radius:6px; border:1px solid #ccc; color:#282828; box-sizing:border-box;}
-.modal-content button { margin-top:16px; width:100%; padding:12px; background:#282828; color:white; border:none; border-radius:8px; cursor:pointer;}
-.modal-content button:hover { background:#1f1f1f;}
-.close { position:absolute; right:15px; top:10px; font-size:22px; font-weight:bold; color:#333; cursor:pointer;}
-
-.deviceRow { display:flex; gap:10px; align-items:center; margin-top:8px; }
-.deviceRow select { flex: 0 0 60%; }
-.deviceRow input.deviceSerial { flex: 1; }
-.hint { font-size:12px; color:#666; margin-top:4px;}
+.modal {
+  position:fixed; inset:0; background:rgba(0,0,0,.45); display:none;
+  align-items:center; justify-content:center; padding:16px;
+}
+.modal .dialog{
+  width:min(780px, 94vw); background:#fff; border-radius:14px;
+  box-shadow:0 20px 50px rgba(0,0,0,.3); overflow:hidden;
+}
+.modal .dialog header{ display:flex; align-items:center; justify-content:space-between; }
+.modal .dialog .body{ padding:16px; }
+.modal .dialog .row{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px; }
+.modal .dialog .row label{ font-size:13px; color:#444; display:block; margin-bottom:6px; }
+.modal .dialog input{
+  width:100%; border:1px solid #ddd; border-radius:10px; padding:8px 10px; outline:none;
+}
+.modal .dialog footer{ display:flex; gap:8px; justify-content:flex-end; padding:12px 16px; border-top:1px solid #eee; }
 </style>
 </head>
 <body>
 
 <!-- Sidebar -->
-<div class="sidebar">
-  <img src="SANSO.jpg" alt="Sanso Logo">
-  <a href="stats.html">📊 სტატისტიკა</a>
-  <a href="settings.html" id="settingsLink" style="display:none;">⚙️ პარამეტრები</a>
-  <!-- ✅ ახალი: პროფილი (მხოლოდ Technician/Viewer) -->
-  <a href="profile.html" id="profileLink" style="display:none;">👤 პროფილი</a>
-  <a href="#" onclick="logout()">🚪 გასვლა</a>
-</div>
-
-<!-- Content -->
-<div class="content">
-  <div class="topbar">
-    <div class="title">Sanso Technical Department</div>
-    <div class="badges">
-      <div class="badge"><span id="thisMonthVisitsLabel">თვე:</span> <strong><span id="thisMonthVisits">0</span></strong></div>
-      <div class="badge" id="revenueBadge" style="display:none;"><span id="thisMonthRevenueLabel">თვე:</span> <strong><span id="thisMonthRevenue">0₾</span></strong></div>
+<nav class="sidebar">
+  <div class="brand">
+    <img src="SANSO.jpg" alt="Sanso">
+    <div>
+      <div class="t1">Sanso Technical</div>
+      <div class="t2">Service Portal</div>
     </div>
   </div>
+  <a href="main.html">მთავარი</a>
+  <a id="settingsLink" href="settings.html">პარამეტრები</a>
+  <a id="profileLink" href="profile.html" style="display:none">პროფილი</a>
+  <div class="spacer"></div>
+  <a class="logout" href="javascript:void(0)" onclick="logout()">გასვლა</a>
+</nav>
 
-  <div class="container">
-    <div class="actions">
-      <button id="addUserBtn" onclick="openUserForm()">+ მომხმარებლის დამატება</button>
-      <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="ძიება ID ან დასახელებით...">
+<!-- Main -->
+<div class="main">
+  <header>
+    <div class="left">
+      <div class="title">მომხმარებლები</div>
+      <span class="badge" id="thisMonthBadge">—</span>
+      <span class="badge" id="thisMonthRevenue">—</span>
     </div>
-
-    <table id="userTable">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>დასახელება</th>
-          <th>აპარატი</th>
-          <th>ტელეფონი</th>
-          <th id="actionsHeader">ქმედება</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-</div>
-
-<!-- Add/Edit User Modal -->
-<div id="userModal" class="modal">
-  <div class="modal-content">
-    <span class="close" onclick="closeUserForm()">&times;</span>
-    <h3 id="modalTitle">მომხმარებლის დამატება</h3>
-
-    <label>ID:</label>
-    <input type="text" id="userId">
-    <label>დასახელება:</label>
-    <input type="text" id="userName">
-    <label>საიდენთიფიკაციო კოდი:</label>
-    <input type="text" id="userCode">
-    <label>მისამართი:</label>
-    <input type="text" id="userAddress">
-    <label>ტელეფონის ნომერი:</label>
-    <input type="text" id="userPhone">
-    <label>საკონტაქტო პირი:</label>
-    <input type="text" id="userContact">
-
-    <label style="margin-top:12px;">აპარატი + სერიული ნომერი:</label>
-    <div id="deviceContainer">
-      <div class="deviceRow">
-        <select class="deviceSelect">
-          <option>Soprano ICE</option>
-          <option>Soprano ICE Platinum</option>
-          <option>Soprano Titanium</option>
-          <option>Accent Prime</option>
-          <option>Prime X</option>
-          <option>Harmony</option>
-        </select>
-        <input class="deviceSerial" type="text" placeholder="აპარატის სერიული ნომერი">
+    <div class="search">
+      <input id="searchInput" type="text" placeholder="ძებნა ID ან სახელით..." oninput="searchTable()">
+      <div class="cta">
+        <button id="addUserBtn" class="btn" onclick="openUserForm()">დამატება</button>
       </div>
     </div>
-    <div class="hint">სიაში გამოჩნდება ასე: <em>Soprano ICE | SPT0155</em></div>
+  </header>
 
-    <button type="button" onclick="saveUser()">შენახვა</button>
+  <div class="container">
+    <div class="card">
+      <div class="card-head">
+        <div class="t">დაფიქსირებული მომხმარებლები</div>
+      </div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table id="userTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>დასახელება</th>
+                <th>მოწყობილობა</th>
+                <th>ტელეფონი</th>
+                <th>ქმედება</th>
+              </tr>
+            </thead>
+            <tbody id="userTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
-<script>
-/* ===== Guard ===== */
-(function(){
-  const cu = JSON.parse(localStorage.getItem("currentUser")||"null");
-  if(!cu){ window.location.href = "login.html"; }
-})();
+<!-- Modal: დამატება/რედაქტირება -->
+<div class="modal" id="userModal">
+  <div class="dialog">
+    <header>
+      <div class="title" id="modalTitle">მომხმარებლის დამატება</div>
+      <button class="btn-small" onclick="closeUserForm()">×</button>
+    </header>
+    <div class="body">
+      <div class="row">
+        <div>
+          <label>ID</label>
+          <input id="userId" type="text" placeholder="მაგ: C-001">
+        </div>
+        <div>
+          <label>დასახელება</label>
+          <input id="userName" type="text" placeholder="კომპანიის სახელი">
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>კოდი</label>
+          <input id="userCode" type="text">
+        </div>
+        <div>
+          <label>მისამართი</label>
+          <input id="userAddress" type="text">
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>ტელეფონი</label>
+          <input id="userPhone" type="text">
+        </div>
+        <div>
+          <label>კონტაქტი</label>
+          <input id="userContact" type="text">
+        </div>
+      </div>
 
-/* ===== Role helpers ===== */
-function getRole(){
-  const cu = JSON.parse(localStorage.getItem("currentUser")||"null");
-  return cu?.role || "Viewer";
-}
+      <div class="row">
+        <div>
+          <label>მოწყობილობა</label>
+          <input id="deviceModel" type="text" placeholder="მაგ: Epson TM-T20">
+        </div>
+        <div>
+          <label>სერიალი</label>
+          <input id="deviceSerial" type="text" placeholder="მაგ: X1A2B3">
+        </div>
+      </div>
+    </div>
+    <footer>
+      <button class="btn-small" onclick="closeUserForm()">დახურვა</button>
+      <button class="btn-small btn-edit" onclick="saveUser()">შენახვა</button>
+    </footer>
+  </div>
+</div>
+
+<!-- Server-backed data store -->
+<script src="/js/data-store.js"></script>
+
+<!-- Main logic (server only; no localStorage) -->
+<script>
+/* ===== Guard & Role helpers (sessionStorage via DataStore) ===== */
+function getCurrentUser(){ return DataStore.getCurrentUser(); }
+function getRole(){ return getCurrentUser()?.role || "Viewer"; }
 function isAdmin(){ return getRole()==="Admin"; }
 function isTech(){ return getRole()==="Technician"; }
 function isViewer(){ return getRole()==="Viewer"; }
 
-/* ===== Helpers ===== */
-const MONTHS_KA = ["იანვარი","თებერვალი","მარტი","აპრილი","მაისი","ივნისი","ივლისი","აგვისტო","სექტემბერი","ოქტომბერი","ნოემბერი","დეკემბერი"];
+(async function(){
+  await DataStore.init();
+  const cu = DataStore.getCurrentUser();
+  if(!cu){ window.location.href = "login.html"; return; }
 
-let users = JSON.parse(localStorage.getItem("users")) || [];
-let editingIndex = null;
+  // ===== State =====
+  let users = await DataStore.getUsers();
+  let editingIndex = null;
 
-function normalizeDevicesToSingle() {
-  let changed = false;
-  users.forEach(u=>{
-    if (Array.isArray(u.devices)) {
-      if (u.devices.length > 0) {
-        let first = u.devices[0];
-        if (typeof first === "string") {
-          u.devices = [{ model: first, serial: "" }];
-          changed = true;
-        } else if (first && typeof first === "object") {
-          u.devices = [{ model: first.model || "", serial: (first.serial || "").trim() }];
-          changed = true;
+  function normalizeDevicesToSingle() {
+    let changed = false;
+    users.forEach(u=>{
+      if (Array.isArray(u.devices)) {
+        if (u.devices.length > 0) {
+          let first = u.devices[0];
+          if (typeof first === "string") {
+            u.devices = [{ model: first, serial: "" }];
+            changed = true;
+          } else if (first && typeof first === "object") {
+            u.devices = [{ model: first.model || "", serial: (first.serial || "").trim() }];
+            changed = true;
+          } else {
+            u.devices = [];
+          }
         } else {
           u.devices = [];
         }
-      } else {
-        u.devices = [];
-      }
-    }
-  });
-  if (changed) localStorage.setItem("users", JSON.stringify(users));
-}
-normalizeDevicesToSingle();
-
-function deviceDisplayOne(u){
-  if (!u.devices || !u.devices.length) return "";
-  const d = u.devices[0];
-  if (typeof d === "object") {
-    const m = d.model || "";
-    const s = (d.serial || "").trim();
-    return s ? `${m} | ${s}` : m;
-  }
-  return d || "";
-}
-
-function renderUsers() {
-  const tbody = document.getElementById("userTable").tBodies[0];
-  tbody.innerHTML = "";
-  users.forEach((u, index) => {
-    let deviceText = deviceDisplayOne(u);
-    let row = tbody.insertRow();
-
-    row.onclick = function() { openUserPage(u.id); };
-
-    let actionHtml = "";
-    if (!isViewer()) {
-      actionHtml = `
-        <button class="btn-small btn-edit" onclick="event.stopPropagation(); editUser(${index})">რედაქტირება</button>
-        <button class="btn-small btn-delete" onclick="event.stopPropagation(); deleteUser(${index})">წაშლა</button>
-      `;
-    }
-
-    row.innerHTML = `
-      <td>${u.id}</td>
-      <td>${u.name}</td>
-      <td>${deviceText}</td>
-      <td>${u.phone || ""}</td>
-      <td class="actionsCell">${actionHtml}</td>`;
-  });
-
-  updateThisMonthBadgeAndRevenue();
-  updateUIByRole();
-}
-
-function updateThisMonthBadgeAndRevenue(){
-  const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
-  const monthName = MONTHS_KA[currentMonth];
-
-  let count = 0;
-  let revenue = 0;
-
-  users.forEach(u=>{
-    (u.services || []).forEach(s=>{
-      if (s.date && typeof s.date === "string") {
-        let d;
-        if (s.date.includes("-")) { 
-          d = new Date(s.date); 
-        } else if (s.date.includes(".")) {
-          let parts = s.date.split(".");
-          if (parts.length === 3) {
-            let day = parseInt(parts[0], 10);
-            let month = parseInt(parts[1], 10) - 1; 
-            let year = parseInt(parts[2], 10);
-            d = new Date(year, month, day);
-          }
-        }
-
-        if (d && d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
-          count++;
-          const rawPrice = String(s.price ?? "");
-          const cleaned = rawPrice.replace(/[^\d.,-]/g, "").trim();
-          const normalized = cleaned.replace(",", ".");
-          const numericPrice = parseFloat(normalized);
-          if (!isNaN(numericPrice)) {
-            revenue += numericPrice;
-          }
-        }
       }
     });
-  });
-
-  document.getElementById("thisMonthVisitsLabel").textContent = `${monthName}:`;
-  document.getElementById("thisMonthVisits").textContent = count;
-
-  const revenueBadge = document.getElementById("revenueBadge");
-  if (isAdmin() || isViewer()) {
-    revenueBadge.style.display = "block";
-    document.getElementById("thisMonthRevenueLabel").textContent = `${monthName}:`;
-    document.getElementById("thisMonthRevenue").textContent = `${revenue.toFixed(2)}₾`;
-  } else {
-    revenueBadge.style.display = "none";
+    if (changed) { DataStore.saveUsers(users).catch(()=>{}); }
   }
-}
+  normalizeDevicesToSingle();
 
-function updateUIByRole(){
-  document.getElementById("addUserBtn").style.display = isViewer() ? "none" : "inline-block";
-  const settingsLink = document.getElementById("settingsLink");
-  const profileLink = document.getElementById("profileLink"); // ✅ დამატებული
-
-  if (isTech()) {
-    settingsLink.style.display = "none";
-    profileLink.style.display = "block";    // ✅ პროფილი ჩანს
-  } else if (isViewer()) {
-    settingsLink.style.display = "none";
-    profileLink.style.display = "block";    // ✅ პროფილი ჩანს
-  } else if (isAdmin()) {
-    settingsLink.style.display = "block";
-    profileLink.style.display = "none";     // ✅ ადმინს არ ვაჩვენებთ
-  }
-}
-
-function openUserForm() {
-  if (isViewer()) { alert("დაშვება მხოლოდ Admin/Technician როლებისთვის."); return; }
-
-  editingIndex = null;
-  document.getElementById("modalTitle").innerText = "მომხმარებლის დამატება";
-  document.getElementById("userId").value = "";
-  document.getElementById("userName").value = "";
-  document.getElementById("userCode").value = "";
-  document.getElementById("userAddress").value = "";
-  document.getElementById("userPhone").value = "";
-  document.getElementById("userContact").value = "";
-
-  document.getElementById("deviceContainer").innerHTML = `
-    <div class="deviceRow">
-      <select class="deviceSelect">
-        <option>Soprano ICE</option>
-        <option>Soprano ICE Platinum</option>
-        <option>Soprano Titanium</option>
-        <option>Accent Prime</option>
-        <option>Prime X</option>
-        <option>Harmony</option>
-      </select>
-      <input class="deviceSerial" type="text" placeholder="აპარატის სერიული ნომერი">
-    </div>`;
-  document.getElementById("userModal").style.display = "block";
-}
-
-function closeUserForm() { document.getElementById("userModal").style.display = "none"; }
-
-function collectDeviceFromForm(){
-  const sel = document.querySelector(".deviceSelect");
-  const ser = document.querySelector(".deviceSerial");
-  return [{ model: sel?.value || "", serial: (ser?.value || "").trim() }];
-}
-
-function saveUser() {
-  if (isViewer()) { alert("დაშვება მხოლოდ Admin/Technician როლებისთვის."); return; }
-
-  const id = document.getElementById("userId").value;
-  const name = document.getElementById("userName").value;
-  const code = document.getElementById("userCode").value;
-  const address = document.getElementById("userAddress").value;
-  const phone = document.getElementById("userPhone").value;
-  const contact = document.getElementById("userContact").value;
-  const devices = collectDeviceFromForm();
-
-  if (!id || !name) { alert("გთხოვთ შეავსოთ სავალდებულო ველები (ID და დასახელება)"); return; }
-
-  const existingServices = (editingIndex!==null && users[editingIndex]?.services) ? users[editingIndex].services : [];
-  const userData = { id, name, code, address, phone, contact, devices, services: existingServices };
-
-  if (editingIndex !== null) {
-    users[editingIndex] = userData;
-  } else {
-    users.push(userData);
-  }
-
-  localStorage.setItem("users", JSON.stringify(users));
-  renderUsers();
-  closeUserForm();
-}
-
-function editUser(index) {
-  if (isViewer()) { alert("დაშვება მხოლოდ Admin/Technician როლებისთვის."); return; }
-
-  editingIndex = index;
-  const u = users[index];
-  document.getElementById("modalTitle").innerText = "მომხმარებლის რედაქტირება";
-  document.getElementById("userId").value = u.id;
-  document.getElementById("userName").value = u.name;
-  document.getElementById("userCode").value = u.code || "";
-  document.getElementById("userAddress").value = u.address || "";
-  document.getElementById("userPhone").value = u.phone || "";
-  document.getElementById("userContact").value = u.contact || "";
-
-  let model="", serial="";
-  if (u.devices && u.devices.length){
+  function deviceDisplayOne(u){
+    if (!u.devices || !u.devices.length) return "";
     const d = u.devices[0];
-    if (typeof d === "object"){ model = d.model || ""; serial = d.serial || ""; }
-    else { model = d; }
+    const model = (d.model || "").trim();
+    const serial = (d.serial || "").trim();
+    return [model, serial].filter(Boolean).join(" / ");
   }
 
-  document.getElementById("deviceContainer").innerHTML = `
-    <div class="deviceRow">
-      <select class="deviceSelect">
-        <option ${model==="Soprano ICE"?"selected":""}>Soprano ICE</option>
-        <option ${model==="Soprano ICE Platinum"?"selected":""}>Soprano ICE Platinum</option>
-        <option ${model==="Soprano Titanium"?"selected":""}>Soprano Titanium</option>
-        <option ${model==="Accent Prime"?"selected":""}>Accent Prime</option>
-        <option ${model==="Prime X"?"selected":""}>Prime X</option>
-        <option ${model==="Harmony"?"selected":""}>Harmony</option>
-      </select>
-      <input class="deviceSerial" type="text" placeholder="აპარატის სერიული ნომერი" value="${serial}">
-    </div>`;
-  document.getElementById("userModal").style.display = "block";
-}
+  const MONTHS_KA = ["იანვარი","თებერვალი","მარტი","აპრილი","მაისი","ივნისი","ივლისი","აგვისტო","სექტემბერი","სექტემბერი","ოქტომბერი","ნოემბერი","დეკემბერი"];
 
-function deleteUser(index) {
-  if (isViewer()) { alert("დაშვება მხოლოდ Admin/Technician როლებისთვის."); return; }
+  function renderUsers(){
+    const tbody = document.getElementById("userTableBody");
+    if(!tbody) return;
+    tbody.innerHTML = "";
+    users.forEach((u, index) => {
+      const row = document.createElement("tr");
+      const deviceText = deviceDisplayOne(u) || "";
+      row.onclick = function() { openUserPage(u.id); };
 
-  if(confirm("ნამდვილად გსურთ წაშლა?")){
-    users.splice(index,1);
-    localStorage.setItem("users", JSON.stringify(users));
+      let actionHtml = "";
+      if (!isViewer()) {
+        actionHtml = `
+          <button class="btn-small btn-edit" onclick="event.stopPropagation(); editUser(${index})">რედაქტირება</button>
+          <button class="btn-small btn-delete" onclick="event.stopPropagation(); deleteUser(${index})">წაშლა</button>
+        `;
+      }
+
+      row.innerHTML = `
+        <td>${u.id ?? ""}</td>
+        <td>${u.name ?? ""}</td>
+        <td>${deviceText}</td>
+        <td>${u.phone || ""}</td>
+        <td class="actionsCell">${actionHtml}</td>`;
+      tbody.appendChild(row);
+    });
+
+    updateThisMonthBadgeAndRevenue();
+    updateUIByRole();
+  }
+
+  function updateThisMonthBadgeAndRevenue(){
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const monthName = MONTHS_KA[currentMonth];
+
+    let count = 0;
+    let revenue = 0;
+
+    users.forEach(u=>{
+      if(Array.isArray(u.services)){
+        u.services.forEach(s=>{
+          const dt = s.date ? new Date(s.date) : null;
+          if (dt && dt.getMonth()===currentMonth && dt.getFullYear()===currentYear) {
+            count++;
+            const price = Number(s.price || 0);
+            if(!isNaN(price)) revenue += price;
+          }
+        });
+      }
+    });
+
+    const badge = document.getElementById("thisMonthBadge");
+    if (badge) badge.textContent = `${monthName}: ${count}`;
+
+    const rev = document.getElementById("thisMonthRevenue");
+    if (rev) rev.textContent = `${revenue.toLocaleString('ka-GE')} ₾`;
+  }
+
+  function updateUIByRole(){
+    const addBtn = document.getElementById("addUserBtn");
+    if (addBtn) addBtn.style.display = isViewer() ? "none" : "inline-block";
+    const settingsLink = document.getElementById("settingsLink");
+    const profileLink = document.getElementById("profileLink");
+    if (settingsLink && profileLink){
+      if (isTech() || isViewer()) { settingsLink.style.display="none"; profileLink.style.display="block"; }
+      else if (isAdmin()) { settingsLink.style.display="block"; profileLink.style.display="none"; }
+    }
+  }
+
+  window.openUserForm = function() {
+    if (isViewer()) { alert("დაშვება მხოლოდ Admin/Technician როლებისთვის."); return; }
+    editingIndex = null;
+    document.getElementById("modalTitle").innerText = "მომხმარებლის დამატება";
+    document.getElementById("userId").value = "";
+    document.getElementById("userName").value = "";
+    document.getElementById("userCode").value = "";
+    document.getElementById("userAddress").value = "";
+    document.getElementById("userPhone").value = "";
+    document.getElementById("userContact").value = "";
+    document.getElementById("deviceModel").value = "";
+    document.getElementById("deviceSerial").value = "";
+    document.getElementById("userModal").style.display = "block";
+  };
+
+  window.saveUser = async function() {
+    if (isViewer()) { alert("დაშვება მხოლოდ Admin/Technician როლებისთვის."); return; }
+    const id = document.getElementById("userId").value;
+    const name = document.getElementById("userName").value;
+    const code = document.getElementById("userCode").value;
+    const address = document.getElementById("userAddress").value;
+    const phone = document.getElementById("userPhone").value;
+    const contact = document.getElementById("userContact").value;
+    const devices = collectDeviceFromForm();
+
+    if (!id || !name) { alert("გთხოვთ შეავსოთ სავალდებულო ველები (ID და დასახელება)"); return; }
+
+    const existingServices = (editingIndex!==null && users[editingIndex]?.services) ? users[editingIndex].services : [];
+    const userData = { id, name, code, address, phone, contact, devices, services: existingServices };
+
+    if (editingIndex !== null) {
+      users[editingIndex] = userData;
+    } else {
+      users.push(userData);
+    }
+
+    await DataStore.saveUsers(users);
     renderUsers();
-  }
-}
+    closeUserForm();
+  };
 
-function openUserPage(id) {
-  localStorage.setItem("selectedUser", id);
-  window.location.href = "user.html";
-}
-
-function searchTable() {
-  let input = document.getElementById("searchInput").value.toLowerCase();
-  let rows = document.getElementById("userTable").getElementsByTagName("tr");
-
-  for (let i = 1; i < rows.length; i++) {
-    let row = rows[i];
-    let idCell = row.cells[0]?.textContent.toLowerCase() || "";
-    let nameCell = row.cells[1]?.textContent.toLowerCase() || "";
-    if (idCell.includes(input) || nameCell.includes(input)) {
-      row.style.display = "";
+  window.editUser = function(index) {
+    if (isViewer()) { alert("დაშვება მხოლოდ Admin/Technician როლებისთვის."); return; }
+    editingIndex = index;
+    const u = users[index];
+    document.getElementById("modalTitle").innerText = "მომხმარებლის რედაქტირება";
+    document.getElementById("userId").value = u.id || "";
+    document.getElementById("userName").value = u.name || "";
+    document.getElementById("userCode").value = u.code || "";
+    document.getElementById("userAddress").value = u.address || "";
+    document.getElementById("userPhone").value = u.phone || "";
+    document.getElementById("userContact").value = u.contact || "";
+    if (u.devices && u.devices[0]){
+      document.getElementById("deviceModel").value = u.devices[0].model || "";
+      document.getElementById("deviceSerial").value = u.devices[0].serial || "";
     } else {
-      row.style.display = "none";
+      document.getElementById("deviceModel").value = "";
+      document.getElementById("deviceSerial").value = "";
     }
+    document.getElementById("userModal").style.display = "block";
+  };
+
+  window.deleteUser = async function(index) {
+    if (isViewer()) { alert("დაშვება მხოლოდ Admin/Technician როლებისთვის."); return; }
+    if (!confirm("ნამდვილად გსურთ წაშლა?")) return;
+    users.splice(index, 1);
+    await DataStore.saveUsers(users);
+    renderUsers();
+  };
+
+  function collectDeviceFromForm(){
+    const model = (document.getElementById("deviceModel")?.value || "").trim();
+    const serial = (document.getElementById("deviceSerial")?.value || "").trim();
+    const arr = [];
+    if (model || serial) arr.push({ model, serial });
+    return arr;
   }
-}
 
-// 🚀 Logout with logging
-function logout(){
-  const cu = JSON.parse(localStorage.getItem("currentUser"));
-  if(cu){
-    const logs=JSON.parse(localStorage.getItem("appLogs")||"[]");
-    logs.unshift({ user:cu.username, action:"Logout", time:new Date().toLocaleString("ka-GE") });
-    localStorage.setItem("appLogs",JSON.stringify(logs));
-  }
-  localStorage.removeItem("currentUser");
-  window.location.href="login.html";
-}
+  window.closeUserForm = function(){
+    const m = document.getElementById("userModal");
+    if (m) m.style.display = "none";
+  };
 
-renderUsers();
-</script>
+  window.openUserPage = function(id) {
+    DataStore.setSelectedUser(id);
+    window.location.href = "user.html";
+  };
 
-<script src="/js/sync-users.js"></script>
-<script>
-  (function boot() {
-    if (window.SansoSync && typeof window.SansoSync.init === 'function') {
-      window.SansoSync.init();
-    } else {
-      console.error('SansoSync not loaded. Check /js/sync-users.js path.');
+  window.searchTable = function() {
+    let input = (document.getElementById("searchInput")?.value || "").toLowerCase();
+    let rows = document.getElementById("userTable")?.getElementsByTagName("tr") || [];
+    for (let i = 1; i < rows.length; i++) {
+      let row = rows[i];
+      let idCell = row.cells[0]?.textContent.toLowerCase() || "";
+      let nameCell = row.cells[1]?.textContent.toLowerCase() || "";
+      row.style.display = (idCell.includes(input) || nameCell.includes(input)) ? "" : "none";
     }
-  })();
-  // window.SansoSync.push(); // სურვილისამებრ, როცა შენს არსებულ კოდში users-ს ცვლი/ინახავ
+  };
+
+  window.logout = async function(){
+    const cu = DataStore.getCurrentUser();
+    if(cu){
+      const logs = await DataStore.getLogs();
+      logs.unshift({ user:cu.username, action:"Logout", time:new Date().toLocaleString("ka-GE") });
+      await DataStore.saveLogs(logs);
+    }
+    DataStore.clearCurrentUser();
+    window.location.href="login.html";
+  };
+
+  renderUsers();
+})();
 </script>
-
-<script src="/js/server-store.js"></script>
-
-<script>
-  // ჩატვირთვაზე: users სერვერიდან localStorage-ში ჩაიწეროს,
-  // რომ შენი არსებული users-ცხრილმა უცვლელად იმუშაოს
-  document.addEventListener('DOMContentLoaded', async () => {
-    try {
-      const remoteUsers =
-        (window.ServerStore && ServerStore.getUsers)
-          ? await ServerStore.getUsers()
-          : [];
-      if (Array.isArray(remoteUsers) && remoteUsers.length) {
-        localStorage.setItem('users', JSON.stringify(remoteUsers));
-      }
-    } catch {}
-  });
-
-  // ნებისმიერ setItem('users', ...) შემდეგ — ჩუმი push სერვერზე (debounce)
-  (function () {
-    const _set = localStorage.setItem.bind(localStorage);
-    localStorage.setItem = function (k, v) {
-      _set(k, v);
-      if (k === 'users' && window.ServerStore && ServerStore.saveUsers) {
-        clearTimeout(localStorage.__usersPushT);
-        localStorage.__usersPushT = setTimeout(async () => {
-          try {
-            const cur = JSON.parse(localStorage.getItem('users') || '[]');
-            await ServerStore.saveUsers(cur);
-          } catch {}
-        }, 250);
-      }
-    };
-  })();
-</script>
-
-
-
 
 </body>
 </html>

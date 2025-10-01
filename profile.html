@@ -2,306 +2,215 @@
 <html lang="ka">
 <head>
 <meta charset="UTF-8">
-<title>პროფილის რედაქტირება</title>
+<title>პროფილი</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body { margin:0; padding:0; font-family:"Myriad Pro","Segoe UI",Arial,sans-serif; display:flex; background:#f4f6f9; color:#282828; }
-
+body {
+  margin:0; padding:0;
+  font-family:"Myriad Pro","Segoe UI",Arial,sans-serif;
+  display:flex;
+  background:#f4f6f9; color:#282828;
+}
 /* Sidebar */
 .sidebar {
-  width:200px; background:#282828; color:#fff; min-height:100vh;
-  display:flex; flex-direction:column; align-items:center;
+  width:200px;
+  background:#282828;
+  color:#fff;
+  min-height:100vh;
+  display:flex; flex-direction:column;
 }
-.sidebar img { width:100px; margin:20px 0; border-radius:8px; }
+.sidebar .brand {
+  display:flex; align-items:center; gap:10px;
+  padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.1);
+}
+.sidebar .brand img{ width:40px; height:40px; object-fit:cover; border-radius:8px; }
+.sidebar .brand .t1{ font-weight:700; }
+.sidebar .brand .t2{ opacity:.8; font-size:12px; }
 .sidebar a {
-  color:#fff; text-decoration:none; padding:12px 16px; font-size:14px; width:100%;
-  display:block; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08); transition:background .2s;
+  color:#fff; text-decoration:none; padding:12px 16px; display:block;
+  border-bottom:1px solid rgba(255,255,255,.06);
 }
-.sidebar a:hover { background:rgba(255,255,255,0.12); }
-.sidebar a.active { background:rgba(255,255,255,0.25); }
+.sidebar a:hover{ background:rgba(255,255,255,.08); }
+.sidebar .spacer{ flex:1; }
+.sidebar .logout{ background:#111; }
 
-/* Content wrapper */
-.content { flex:1; display:flex; flex-direction:column; }
-
-/* Topbar */
-.topbar {
-  background:#282828; color:#fff; padding:14px 20px;
+/* Main */
+.main { flex:1; display:flex; flex-direction:column; gap:14px; }
+header {
+  background:#fff; border-bottom:1px solid #eee; padding:12px 16px;
   display:flex; align-items:center; justify-content:space-between;
 }
-.topbar .title { font-size:18px; font-weight:bold; }
-.topbar .badges { display:flex; gap:12px; }
-.topbar .badge {
-  background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.35);
-  padding:6px 10px; border-radius:8px; font-size:13px;
+header .left{ display:flex; align-items:center; gap:10px; }
+header .title{ font-weight:700; }
+.container{ padding:16px; display:grid; gap:16px; grid-template-columns: 1fr; }
+
+/* Card */
+.card{ background:#fff; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+.card-head{ padding:12px 16px; background:#282828; color:#fff; display:flex; align-items:center; justify-content:space-between; }
+.card-body{ padding:16px; }
+.form{ display:grid; gap:12px; max-width:520px; }
+.form label{ font-size:13px; color:#444; display:block; margin-bottom:6px; }
+.form input, .form select{
+  width:100%; border:1px solid #ddd; border-radius:10px; padding:8px 10px; outline:none;
 }
-
-.container { width:95%; max-width:900px; margin:24px auto; }
-.card { background:#fff; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1); padding:16px; margin-bottom:18px; }
-.card h2 { margin:0 0 12px 0; font-size:18px; color:#282828; }
-
-.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-.form-grid .full { grid-column:1 / -1; }
-label { display:block; font-weight:600; margin-bottom:6px; color:#333; }
-input[type="text"], input[type="email"], input[type="password"]{
-  width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; color:#282828; box-sizing:border-box;
-}
-.actions { display:flex; gap:10px; margin-top:12px; }
-.btn {
-  padding:10px 14px; border:none; border-radius:8px; cursor:pointer; font-size:14px;
-}
-.btn-primary { background:#282828; color:#fff; }
-.btn-primary:hover { background:#1f1f1f; }
-.btn-secondary { background:#e9ecef; color:#222; }
-.btn-secondary:hover { background:#dde2e6; }
-
-.note { font-size:12px; color:#666; margin-top:6px; }
-
-/* Small table for info (if needed in future) */
-table { width:100%; border-collapse:collapse; }
-th, td { padding:10px; border-bottom:1px solid #eee; text-align:left; font-size:14px; }
-th { background:#f2f6ff; color:#222; }
+.actions{ display:flex; gap:10px; margin-top:10px; }
+.btn{ background:#282828; color:#fff; border:none; padding:8px 12px; border-radius:10px; cursor:pointer; }
+.btn:hover{ background:#1f1f1f; }
 </style>
 </head>
 <body>
 
 <!-- Sidebar -->
-<div class="sidebar">
-  <img src="SANSO.jpg" alt="Sanso Logo">
-  <a href="main.html">🏠 მთავარი</a>
-  <a href="stats.html" id="statsLink">📊 სტატისტიკა</a>
-  <a href="profile.html" class="active">👤 პროფილი</a>
-  <a href="#" onclick="logout()">🚪 გასვლა</a>
-</div>
-
-<!-- Content -->
-<div class="content">
-  <div class="topbar">
-    <div class="title">Sanso Technical Department</div>
-    <div class="badges">
-      <div class="badge">მომხმარებელი: <strong id="badgeUser">—</strong></div>
-      <div class="badge">როლი: <strong id="badgeRole">—</strong></div>
+<nav class="sidebar">
+  <div class="brand">
+    <img src="SANSO.jpg" alt="Sanso">
+    <div>
+      <div class="t1">Sanso Technical</div>
+      <div class="t2">Service Portal</div>
     </div>
   </div>
+  <a href="main.html">მთავარი</a>
+  <a id="settingsLink" href="settings.html" style="display:none">პარამეტრები</a>
+  <a id="profileLink" href="profile.html">პროფილი</a>
+  <div class="spacer"></div>
+  <a class="logout" href="javascript:void(0)" onclick="logout()">გასვლა</a>
+</nav>
+
+<!-- Main -->
+<div class="main">
+  <header>
+    <div class="left">
+      <div class="title">პროფილის რედაქტირება</div>
+      <span class="badge" id="badgeUser" style="background:#111;color:#fff;border-radius:10px;padding:6px 10px; font-size:13px">—</span>
+      <span class="badge" id="badgeRole" style="background:#111;color:#fff;border-radius:10px;padding:6px 10px; font-size:13px">—</span>
+    </div>
+  </header>
 
   <div class="container">
     <div class="card">
-      <h2>პროფილის რედაქტირება</h2>
-      <div class="form-grid">
-        <div class="full">
-          <label>მომხმარებელი (username)</label>
-          <input type="text" id="username">
-          <div class="note">გაითვალისწინე: მომხმარებლის შეცვლისას არ უნდა დაემთხვეს სხვას.</div>
-        </div>
-
-        <div class="full">
-          <label>სახელი და გვარი</label>
-          <input type="text" id="fullName">
-        </div>
-
-        <div>
-          <label>Email</label>
-          <input type="email" id="email" placeholder="name@example.com">
-        </div>
-
-        <div>
-          <label>როლი</label>
-          <input type="text" id="role" disabled>
-          <div class="note">როლის შეცვლა შესაძლებელია მხოლოდ Admin-ის მიერ.</div>
-        </div>
-
-        <div>
-          <label>ახალი პაროლი</label>
-          <input type="password" id="password" placeholder="ახალი პაროლი (არასავალდებულო)">
-        </div>
-
-        <div>
-          <label>დაადასტურე პაროლი</label>
-          <input type="password" id="password2" placeholder="გაიმეორე პაროლი">
-        </div>
+      <div class="card-head">
+        <div>ჩემი პროფილი</div>
       </div>
+      <div class="card-body">
+        <div class="form">
+          <div>
+            <label>მომხმარებელი</label>
+            <input id="username" type="text" placeholder="username">
+          </div>
+          <div>
+            <label>სახელი და გვარი</label>
+            <input id="fullName" type="text" placeholder="სახელი გვარი">
+          </div>
+          <div>
+            <label>როლი</label>
+            <select id="role" disabled>
+              <option value="Admin">Admin</option>
+              <option value="Technician">Technician</option>
+              <option value="Viewer">Viewer</option>
+            </select>
+          </div>
+          <div>
+            <label>პაროლი</label>
+            <input id="password" type="text" placeholder="პაროლი">
+          </div>
 
-      <div class="actions">
-        <button class="btn btn-primary" onclick="saveProfile()">შენახვა</button>
-        <button class="btn btn-secondary" onclick="resetForm()">გაუქმება</button>
+          <div class="actions">
+            <button class="btn" onclick="saveProfile()">შენახვა</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Data Store -->
+<script src="/js/data-store.js"></script>
+
+<!-- Page Logic (server-backed; no localStorage) -->
 <script>
-/* ===== Guard: მხოლოდ ავტორიზებული ===== */
-(function guard(){
-  const cu = JSON.parse(localStorage.getItem("currentUser")||"null");
-  if(!cu){ window.location.href = "login.html"; return; }
-
-  // თუ Admin შეხვდა პროფილის გვერდს, გადავამისამართოთ პარამეტრებზე
-  if(cu.role === "Admin"){ window.location.href = "settings.html"; return; }
-})();
-
-/* ===== Role helpers ===== */
-function getCurrentUser(){ return JSON.parse(localStorage.getItem("currentUser")||"null"); }
+function getCurrentUser(){ return DataStore.getCurrentUser(); }
 function getRole(){ return getCurrentUser()?.role || "Viewer"; }
-function isTech(){ return getRole()==="Technician"; }
-function isViewer(){ return getRole()==="Viewer"; }
 
-/* ===== UI by role (Sidebar links visibility) ===== */
-(function updateSidebar(){
-  const statsLink = document.getElementById("statsLink");
-  if(isTech()){ statsLink.style.display = "none"; } // Technician-ს არ აქვს სტატისტიკა (როგორც სხვა გვერდებზე)
-  const cu = getCurrentUser();
-  document.getElementById("badgeUser").textContent = cu?.username || "—";
-  document.getElementById("badgeRole").textContent = cu?.role || "—";
+let appUsers = [];
+let originalUsername = null;
+
+(async function init(){
+  await DataStore.init();
+
+  const cu = DataStore.getCurrentUser();
+  if (!cu){ window.location.href = "login.html"; return; }
+
+  // Admin მომხმარებელი აქ არ შემოვუშვათ (Admin-ს settings.html აქვს)
+  if (cu.role === "Admin"){ window.location.href = "settings.html"; return; }
+
+  // Sidebar badges
+  document.getElementById("badgeUser").textContent = cu.username;
+  document.getElementById("badgeRole").textContent = cu.role;
+
+  // Sidebar visibility
+  const settingsLink = document.getElementById("settingsLink");
+  const profileLink = document.getElementById("profileLink");
+  if (settingsLink && profileLink){
+    settingsLink.style.display = "none";
+    profileLink.style.display = "block";
+  }
+
+  appUsers = await DataStore.getAppUsers();
+  originalUsername = cu.username;
+  loadForm();
 })();
-
-/* ===== Load data into form ===== */
-let appUsers = JSON.parse(localStorage.getItem("appUsers")||"[]");
-let cu = getCurrentUser();
-let originalUsername = cu.username; // რათა ვიპოვოთ ჩანაწერი users-ში რედაქტირებისას
 
 function loadForm(){
-  // ჰპოვე user ჩანაწერი appUsers-ში
   const u = appUsers.find(x => x.username === originalUsername);
-  // fallback: თუ ვერ ვიპოვეთ, ავიღოთ currentUser-დან რაც გვაქვს
-  const data = u || cu || {};
-
-  document.getElementById("username").value = data.username || "";
-  document.getElementById("fullName").value = data.fullName || "";
-  document.getElementById("email").value = data.email || "";
-  document.getElementById("role").value = data.role || "";
-  document.getElementById("password").value = "";
-  document.getElementById("password2").value = "";
+  if (!u) return;
+  document.getElementById("username").value = u.username || "";
+  document.getElementById("fullName").value = u.fullName || "";
+  document.getElementById("role").value = u.role || "Viewer";
+  document.getElementById("password").value = u.password || "";
 }
-loadForm();
 
-function resetForm(){ loadForm(); }
-
-/* ===== Save Profile ===== */
-function saveProfile(){
-  const newUsername = document.getElementById("username").value.trim();
-  const fullName = document.getElementById("fullName").value.trim();
-  const email = document.getElementById("email").value.trim();
-  const pass1 = document.getElementById("password").value;
-  const pass2 = document.getElementById("password2").value;
-
-  if(!newUsername){ alert("მომხმარებელი (username) აუცილებელია."); return; }
-  if(fullName.length === 0){ alert("სახელი და გვარი აუცილებელია."); return; }
-  if(email && !/^\S+@\S+\.\S+$/.test(email)){ alert("Email ფორმატია არასწორი."); return; }
-  if(pass1 || pass2){
-    if(pass1.length < 3){ alert("პაროლი ძალიან მოკლეა (მინ. 3 სიმბოლო)."); return; }
-    if(pass1 !== pass2){ alert("პაროლები არ ემთხვევა."); return; }
-  }
-
-  // მოვძებნოთ ძველი ჩანაწერი
+async function saveProfile(){
   const idx = appUsers.findIndex(x => x.username === originalUsername);
-  if(idx === -1){ alert("ვერ ვპოულობ პროფილს სიის მიხედვით."); return; }
+  if (idx < 0) return;
 
-  // Username-ის დუბლიკატის შემოწმება (თუ შეიცვალა)
-  if(newUsername !== originalUsername){
-    const exists = appUsers.some(x => x.username === newUsername);
-    if(exists){ alert("ეს მომხმარებლის სახელი უკვე დაკავებულია."); return; }
-  }
-
-  // განახლება
-  const currentRecord = appUsers[idx];
   const updated = {
-    ...currentRecord,
-    username: newUsername,
-    fullName: fullName,
-    email: email
+    ...appUsers[idx],
+    username: document.getElementById("username").value.trim() || appUsers[idx].username,
+    fullName: document.getElementById("fullName").value.trim() || appUsers[idx].fullName,
+    role:     appUsers[idx].role, // როლის შეცვლას პროფილიდან არ ვუშვებთ
+    password: document.getElementById("password").value
   };
-  // პაროლის შეცვლა მხოლოდ მაშინ, თუ ახალი შეყვანილია
-  if(pass1){ updated.password = pass1; }
 
   appUsers[idx] = updated;
-  localStorage.setItem("appUsers", JSON.stringify(appUsers));
-
-  // currentUser-ის განახლება
-  const cuNew = {
-    ...getCurrentUser(),
-    username: updated.username,
-    fullName: updated.fullName,
-    // როლი უცვლელია
-  };
-  localStorage.setItem("currentUser", JSON.stringify(cuNew));
+  await DataStore.saveAppUsers(appUsers);
 
   // ლოგი
-  const logs = JSON.parse(localStorage.getItem("appLogs")||"[]");
-  logs.unshift({
-    user: updated.username,
-    action: "Profile Update",
-    time: new Date().toLocaleString("ka-GE")
-  });
-  localStorage.setItem("appLogs", JSON.stringify(logs));
+  const logs = await DataStore.getLogs();
+  logs.unshift({ user: originalUsername, action:"ProfileUpdate", time: new Date().toLocaleString("ka-GE") });
+  await DataStore.saveLogs(logs);
 
-  // Success
-  alert("პროფილი განახლდა.");
-  // თუ username შეიცვალა, განვაახლოთ სახელიც ბეჯებზე და ორისინალი
-  originalUsername = updated.username;
-  document.getElementById("badgeUser").textContent = updated.username;
-  resetForm();
-}
-
-/* ===== Logout with logging ===== */
-function logout(){
-  const cu = getCurrentUser();
-  if(cu){
-    const logs=JSON.parse(localStorage.getItem("appLogs")||"[]");
-    logs.unshift({ user:cu.username, action:"Logout", time:new Date().toLocaleString("ka-GE") });
-    localStorage.setItem("appLogs",JSON.stringify(logs));
+  // თუ იუზერნეიმი შეიცვალა, სესიის იუზერიც განვაახლოთ
+  const cu = DataStore.getCurrentUser();
+  if (cu && updated.username !== cu.username) {
+    DataStore.setCurrentUser({ ...cu, username: updated.username, fullName: updated.fullName });
+    originalUsername = updated.username;
+    document.getElementById("badgeUser").textContent = updated.username;
   }
-  localStorage.removeItem("currentUser");
-  window.location.href="login.html";
+
+  alert("პროფილი განახლდა.");
+}
+
+async function logout(){
+  const cu = DataStore.getCurrentUser();
+  if(cu){
+    const logs = await DataStore.getLogs();
+    logs.unshift({ user:cu.username, action:"Logout", time:new Date().toLocaleString("ka-GE") });
+    await DataStore.saveLogs(logs);
+  }
+  DataStore.clearCurrentUser();
+  window.location.href = "login.html";
 }
 </script>
-
-<script src="/js/sync-users.js"></script>
-<script>
-  (function boot() {
-    if (window.SansoSync && typeof window.SansoSync.init === 'function') {
-      window.SansoSync.init();
-    } else {
-      console.error('SansoSync not loaded. Check /js/sync-users.js path.');
-    }
-  })();
-  // window.SansoSync.push(); // სურვილისამებრ, როცა შენს არსებულ კოდში users-ს ცვლი/ინახავ
-</script>
-
-<script src="/js/server-store.js"></script>
-
-<script>
-  // ჩატვირთვაზე: appUsers სერვერიდან localStorage-ში ჩაიწეროს,
-  // რომ არსებული UI/ფუნქციები უცვლელად იმუშაოს
-  document.addEventListener('DOMContentLoaded', async () => {
-    try {
-      const remote =
-        (window.ServerStore && ServerStore.getAppUsers)
-          ? await ServerStore.getAppUsers()
-          : [];
-      if (Array.isArray(remote) && remote.length) {
-        localStorage.setItem('appUsers', JSON.stringify(remote));
-      }
-    } catch {}
-  });
-
-  // ნებისმიერ setItem('appUsers', ...) შემდეგ — ჩუმი push სერვერზე (debounce)
-  (function () {
-    const _set = localStorage.setItem.bind(localStorage);
-    localStorage.setItem = function (k, v) {
-      _set(k, v);
-      if (k === 'appUsers' && window.ServerStore && ServerStore.saveAppUsers) {
-        clearTimeout(localStorage.__appUsersPushT);
-        localStorage.__appUsersPushT = setTimeout(async () => {
-          try {
-            const cur = JSON.parse(localStorage.getItem('appUsers') || '[]');
-            await ServerStore.saveAppUsers(cur);
-          } catch {}
-        }, 250);
-      }
-    };
-  })();
-</script>
-
-
 
 </body>
 </html>

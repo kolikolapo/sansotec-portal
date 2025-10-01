@@ -17,533 +17,423 @@ body {
 .sidebar {
   width:200px;
   background:#282828;
-  color:white;
+  color:#fff;
   min-height:100vh;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
+  display:flex; flex-direction:column;
 }
-.sidebar img {
-  width:100px;
-  margin:20px 0;
-  border-radius:8px;
+.sidebar .brand {
+  display:flex; align-items:center; gap:10px;
+  padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.1);
 }
+.sidebar .brand img{ width:40px; height:40px; object-fit:cover; border-radius:8px; }
+.sidebar .brand .t1{ font-weight:700; }
+.sidebar .brand .t2{ opacity:.8; font-size:12px; }
 .sidebar a {
-  color:white;
-  text-decoration:none;
-  padding:12px 16px;
-  font-size:14px;
-  width:100%;
-  display:block;
-  text-align:left;
-  border-bottom:1px solid rgba(255,255,255,0.08);
-  transition:background .2s;
+  color:#fff; text-decoration:none; padding:12px 16px; display:block;
+  border-bottom:1px solid rgba(255,255,255,.06);
 }
-.sidebar a:hover { background:rgba(255,255,255,0.12); }
-.sidebar a.active { background:rgba(255,255,255,0.25); }
+.sidebar a:hover{ background:rgba(255,255,255,.08); }
+.sidebar .spacer{ flex:1; }
+.sidebar .logout{ background:#111; }
 
-/* ===== Content wrapper ===== */
-.content {
-  flex:1;
-  display:flex;
-  flex-direction:column;
+/* ===== Main header ===== */
+header {
+  background:#fff; border-bottom:1px solid #eee; padding:12px 16px;
+  display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%;
 }
+header .left{ display:flex; align-items:center; gap:10px; }
+header .title{ font-weight:700; }
 
-/* ===== Top Banner (same as main) ===== */
-.topbar {
-  background:#282828;
-  color:white;
-  padding:14px 20px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
+/* ===== Content ===== */
+.container { width:95%; max-width:980px; margin:24px auto; display:flex; flex-direction:column; gap:16px; }
+.card { background:#fff; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1); padding:16px; }
+.card h2 { margin:0 0 12px 0; font-size:18px; color:#282828; }
+
+.user-info { display:grid; grid-template-columns:1fr 1fr; gap:10px; background:#fafafa; padding:12px; border:1px solid #eee; border-radius:10px; }
+.user-info .row{ display:flex; gap:8px; }
+.user-info .key{ width:120px; color:#555; font-weight:600; }
+.user-info .val{ color:#222; }
+
+.badge-wrap{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.revenue-badge{ background:#111;color:#fff; border-radius:12px; padding:8px 12px; font-size:14px; }
+.revenue-badge strong{ font-weight:700; }
+
+/* ===== Actions & table ===== */
+.actions { display:flex; gap:10px; margin-top:6px; }
+.actions button { background:#282828; color:#fff; border:none; border-radius:10px; padding:8px 10px; cursor:pointer; }
+.actions button:hover{ background:#1f1f1f; }
+
+.table-wrap{ overflow:auto; border:1px solid #eee; border-radius:10px; }
+table{ border-collapse:collapse; width:100%; background:#fff; }
+th, td{ border-bottom:1px solid #eee; padding:10px 12px; text-align:left; }
+tr:hover{ background:#fafafa; }
+
+/* ===== Filters ===== */
+.filters { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px; }
+.filters select, .filters input { width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:10px; }
+
+/* ===== Modal ===== */
+.modal { display:none; position:fixed; z-index:999; inset:0; background:rgba(0,0,0,0.45); }
+.modal .modal-content {
+  width:min(560px, 94vw); background:#fff; margin:5% auto; padding:20px 16px; border-radius:12px;
+  position:relative; box-shadow:0 20px 50px rgba(0,0,0,0.3);
 }
-.topbar .title {
-  font-size:18px;
-  font-weight:bold;
-}
+.modal .modal-content h3 { text-align:center; margin-top:0; color:#282828; }
+.modal .modal-content label { display:block; margin-top:12px; font-weight:600; color:#333; }
+.modal .modal-content input, .modal .modal-content select { width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; color:#282828; box-sizing:border-box; }
+.modal .modal-content button { margin-top:16px; width:100%; padding:12px; background:#282828; color:white; border:none; border-radius:8px; cursor:pointer; }
+.modal .modal-content button:hover { background:#1f1f1f; }
+.close { position:absolute; right:14px; top:10px; font-size:22px; font-weight:bold; color:#333; cursor:pointer; }
 
-/* ===== Page body (kept from your user page) ===== */
-.container { width:90%; max-width:1200px; margin:20px auto; }
-
-.user-info {
-  display:grid; grid-template-columns:1fr 1fr; gap:20px;
-  background:white; padding:20px; border-radius:10px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.1); margin-bottom:20px;
-}
-.user-info div { font-size:16px; padding:5px 0; }
-
-.actions {
-  display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;
-}
-.actions button {
-  padding:10px 15px; border:none; background:#282828; color:white; border-radius:6px; cursor:pointer;
-}
-.actions button:hover { background:#1f1f1f; }
-
-table {
-  width:100%; border-collapse:collapse; background:white; border-radius:10px;
-  overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-table th, table td { padding:12px; text-align:left; border-bottom:1px solid #e7e7e7; font-size:14px; }
-table th { background:#efefef; }
-tr:hover { background:#f7f7f7; }
-
-a.file-link { color:#282828; text-decoration:underline; }
-
-.btn-small { padding:5px 10px; border:none; border-radius:5px; cursor:pointer; font-size:13px;}
-.btn-edit { background:#b58900; color:white;}
-.btn-delete { background:#b00020; color:white;}
-.btn-edit:hover, .btn-delete:hover { filter:brightness(0.95); }
-
-/* Back button (ვტოვებ ფუნქციურად უცვლელს) */
-.back-btn { margin-bottom:15px; padding:8px 12px; background:#6b6b6b; color:white; border:none; border-radius:5px; cursor:pointer;}
-.back-btn:hover { background:#555; }
-
-/* Popups (unchanged) */
-.modal { display:none; position:fixed; z-index:999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); }
-.modal-content { background:white; margin:5% auto; padding:24px; border-radius:10px; width:560px; max-width:92%; position:relative; box-shadow:0 5px 15px rgba(0,0,0,0.3); }
-.modal-content h3 { text-align:center; margin-top:0; color:#282828; }
-.modal-content label { display:block; margin-top:12px; }
-.modal-content input, .modal-content select { width:100%; padding:10px; margin-top:6px; margin-bottom:6px; border-radius:6px; border:1px solid #ccc; color:#282828; box-sizing:border-box; }
-.modal-content button { margin-top:16px; width:100%; padding:12px; background:#282828; color:white; border:none; border-radius:8px; cursor:pointer; }
-.modal-content button:hover { background:#1f1f1f; }
-.close { position:absolute; right:15px; top:10px; font-size:22px; font-weight:bold; color:#333; cursor:pointer; }
-
-/* Lightbox (unchanged) */
-#photoLightbox { display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8); }
+/* ===== Lightbox ===== */
+#photoLightbox { display:none; position:fixed; z-index:1000; inset:0; background:rgba(0,0,0,0.8); }
 #photoLightbox img { max-width:90%; max-height:80%; display:block; margin:50px auto; }
-#photoLightbox button { margin:0 5px; padding:5px 10px; border:none; border-radius:5px; cursor:pointer; background:#282828; color:white; }
-#photoLightbox span.close { position:absolute; right:20px; top:10px; font-size:28px; font-weight:bold; cursor:pointer; color:white; }
-
-/* Revenue badge */
-.badge-wrap { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; }
-.revenue-badge { display:none; font-size:14px; background:#fff; padding:6px 10px; border-radius:8px; border:1px solid #ddd; box-shadow:0 2px 6px rgba(0,0,0,0.05); }
+#photoLightbox button { margin:0 auto; display:block; background:#fff; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; }
 </style>
 </head>
 <body>
 
-<!-- ===== Sidebar ===== -->
-<div class="sidebar">
-  <img src="SANSO.jpg" alt="Sanso Logo">
-  <a href="main.html">🏠 მთავარი</a>
-  <a href="stats.html" id="statsLink">📊 სტატისტიკა</a>
-  <a href="settings.html" id="settingsLink" style="display:none;">⚙️ პარამეტრები</a>
-  <a href="profile.html" id="profileLink" style="display:none;">👤 პროფილი</a>
-  <a href="#" onclick="logout()">🚪 გასვლა</a>
-</div>
-
-<!-- ===== Content ===== -->
-<div class="content">
-  <div class="topbar">
-    <div class="title">Sanso Technical Department</div>
-    <div></div>
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="brand">
+    <img src="SANSO.jpg" alt="Sanso">
+    <div>
+      <div class="t1">Sanso Technical</div>
+      <div class="t2">Service Portal</div>
+    </div>
   </div>
+  <a href="main.html">მთავარი</a>
+  <a id="statsLink" href="stats.html">სტატისტიკა</a>
+  <a id="settingsLink" href="settings.html">პარამეტრები</a>
+  <a id="profileLink" href="profile.html" style="display:none">პროფილი</a>
+  <div class="spacer"></div>
+  <a class="logout" href="javascript:void(0)" onclick="logout()">გასვლა</a>
+</nav>
+
+<!-- Main -->
+<div style="flex:1; display:flex; flex-direction:column;">
+  <header>
+    <div class="left">
+      <button class="actions" onclick="goBack()" style="background:#eee;color:#111;border-radius:10px;padding:6px 10px;border:1px solid #ddd">← უკან</button>
+      <div class="title">მომხმარებლის გვერდი</div>
+    </div>
+  </header>
 
   <div class="container">
-    <!-- ვტოვებ უკან გასვლის ღილაკს (არ შევეხე ფუნქციას) -->
-    <button class="back-btn" onclick="goBack()">← უკან</button>
-
-    <div class="user-info" id="userInfo"></div>
-
-    <div class="badge-wrap">
-      <h2 style="margin:0;">ტექნიკური ვიზიტები (<span id="serviceCount">0</span>)</h2>
-      <div id="userRevenue" class="revenue-badge">ჯამური შემოსავალი: <strong><span id="userRevenueValue">0.00 ₾</span></strong></div>
+    <!-- User info -->
+    <div class="card">
+      <h2>კლიენტის ინფორმაცია</h2>
+      <div class="user-info" id="userInfo"></div>
     </div>
 
-    <div class="actions" style="margin-top:8px;">
-      <button id="addServiceBtn" onclick="openServiceForm()">+ ტექნიკური სერვისის დამატება</button>
-    </div>
+    <!-- Summary & Add button -->
+    <div class="card">
+      <div class="badge-wrap">
+        <h2 style="margin:0;">ტექნიკური ვიზიტები (<span id="serviceCount">0</span>)</h2>
+        <div id="userRevenue" class="revenue-badge">ჯამური შემოსავალი: <strong><span id="userRevenueValue">0.00 ₾</span></strong></div>
+      </div>
 
-    <table id="serviceTable">
-      <thead>
-        <tr>
-          <th>თარიღი</th>
-          <th>დანიშნულება 
-            <select id="filterPurpose" onchange="filterTable()">
-              <option value="">ყველა</option>
-              <option>წმენდა</option>
-              <option>გამოძახება</option>
-              <option>ფილტრები</option>
-              <option>თავაკის შეკეთება</option>
-              <option>აპარატის შეკეთება</option>
-              <option>სხვა</option>
-            </select>
-          </th>
-          <th>დოკუმენტი</th>
-          <th>ფოტოები</th>
-          <th>ფასი (GEL)</th>
-          <th>ტექნიკოსი
-            <select id="filterTechnician" onchange="filterTable()">
-              <option value="">ყველა</option>
-              <option>ნიკო</option>
-              <option>ვახო</option>
-              <option>ნიკო/ვახო</option>
-            </select>
-          </th>
-          <th>ქმედება</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+      <div class="actions" style="margin-top:8px;">
+        <button id="addServiceBtn" onclick="openServiceForm()">+ ტექნიკური სერვისის დამატება</button>
+      </div>
+
+      <div class="filters">
+        <select id="filterPurpose" onchange="renderServices()">
+          <option value="">ყველა დანიშნულება</option>
+          <option>წმენდა</option>
+          <option>გამოძახება</option>
+          <option>ფილტრები</option>
+          <option>თავაკის შეკეთება</option>
+        </select>
+        <input id="filterTechnician" type="text" placeholder="ტექნიკოსი... (არასავალდებულო)" oninput="renderServices()">
+      </div>
+
+      <div class="table-wrap" style="margin-top:8px;">
+        <table id="serviceTable">
+          <thead>
+            <tr>
+              <th>თარიღი</th>
+              <th>დანიშნულება</th>
+              <th>დოკუმენტი</th>
+              <th>ფოტო</th>
+              <th>ფასი</th>
+              <th>ტექნიკოსი</th>
+              <th>ქმედება</th>
+            </tr>
+          </thead>
+          <tbody id="serviceTableBody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- ===== Add/Edit Service Modal (unchanged) ===== -->
-<div id="serviceModal" class="modal">
+<!-- ===== Add/Edit Service Modal ===== -->
+<div id="serviceModal" class="modal" aria-hidden="true">
   <div class="modal-content">
     <span class="close" onclick="closeServiceForm()">&times;</span>
     <h3 id="modalTitle">ტექნიკური სერვისი</h3>
+
     <label>თარიღი:</label>
     <input type="text" id="serviceDate">
+
     <label>დანიშნულება:</label>
     <select id="servicePurposeSelect">
       <option>წმენდა</option>
       <option>გამოძახება</option>
       <option>ფილტრები</option>
       <option>თავაკის შეკეთება</option>
-      <option>აპარატის შეკეთება</option>
-      <option>სხვა</option>
     </select>
-    <label>დოკუმენტი (PDF):</label>
-    <input type="file" id="serviceDoc" accept=".pdf">
-    <label>ფოტოები:</label>
-    <input type="file" id="servicePhotos" accept="image/*" multiple>
-    <label>ფასი (GEL):</label>
-    <input type="number" id="servicePrice">
+
+    <label>დოკუმენტი (ნომერი ან ტექსტი):</label>
+    <input type="text" id="serviceDoc" placeholder="მაგ: INV-00123">
+
+    <label>ფოტო (URL ან აღწერა):</label>
+    <input type="text" id="servicePhotos" placeholder="მაგ: https://...">
+
+    <label>ფასი (₾):</label>
+    <input type="text" id="servicePrice" placeholder="მაგ: 50">
+
     <label>ტექნიკოსი:</label>
-    <select id="serviceTechnician">
-      <option>ნიკო</option>
-      <option>ვახო</option>
-      <option>ნიკო/ვახო</option>
-    </select>
-    <button type="button" onclick="saveService()">შენახვა</button>
+    <input type="text" id="serviceTechnician" placeholder="მაგ: ნიკო">
+
+    <button onclick="saveService()">შენახვა</button>
   </div>
 </div>
 
-<!-- ===== Lightbox (unchanged) ===== -->
+<!-- ===== Lightbox ===== -->
 <div id="photoLightbox">
-  <span class="close" onclick="closeLightbox()">&#215;</span>
-  <img id="lightboxImage">
-  <div style="text-align:center; margin-top:10px;">
-    <button onclick="prevPhoto()">⟨ წინა</button>
-    <button onclick="nextPhoto()">მომდევნო ⟩</button>
-  </div>
+  <img id="lightboxImage" alt="სურათი">
+  <button onclick="closeLightbox()">დახურვა</button>
 </div>
 
+<!-- Libs -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script>
-/* ===== Guard (unchanged) ===== */
-(function(){
-  const cu = JSON.parse(localStorage.getItem("currentUser")||"null");
-  if(!cu){ window.location.href = "login.html"; }
-})();
+<!-- Server-backed data store -->
+<script src="/js/data-store.js"></script>
 
-/* ===== Role helpers (kept) ===== */
-function getRole(){
-  const cu = JSON.parse(localStorage.getItem("currentUser")||"null");
-  return cu?.role || "Viewer";
-}
+<!-- Page logic (NO localStorage; server only) -->
+<script>
+/* ===== Role & Guard ===== */
+function getCurrentUser(){ return DataStore.getCurrentUser(); }
+function getRole(){ return getCurrentUser()?.role || "Viewer"; }
 function isAdmin(){ return getRole()==="Admin"; }
 function isTech(){ return getRole()==="Technician"; }
 function isViewer(){ return getRole()==="Viewer"; }
 
-/* ===== Users + Selected (kept) ===== */
-let users = JSON.parse(localStorage.getItem("users")) || [];
-let selectedUserId = localStorage.getItem("selectedUser");
-let currentUser = users.find(u=>u.id===selectedUserId);
-let editingIndex = null;
+function goBack(){ window.location.href = "main.html"; }
 
-/* ===== Dates migration (kept) ===== */
-function toDisplayDate(str){
-  if (!str) return str;
-  if (/^\d{2}\.\d{2}\.\d{4}$/.test(str)) return str;
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str);
-  if (m) { const [, y, mm, dd] = m; return `${dd}.${mm}.${y}`; }
-  return str;
-}
-function migrateOldDatesForUser(user){
-  if (!user || !Array.isArray(user.services)) return;
-  let changed = false;
-  user.services.forEach(s => {
-    if (s && s.date) {
-      const nd = toDisplayDate(s.date);
-      if (nd !== s.date) { s.date = nd; changed = true; }
-    }
-  });
-  if (changed) {
-    const idx = users.findIndex(u => u.id === user.id);
-    if (idx !== -1) { users[idx] = user; localStorage.setItem("users", JSON.stringify(users)); }
+async function logout(){
+  const cu = DataStore.getCurrentUser();
+  if (cu) {
+    const logs = await DataStore.getLogs();
+    logs.unshift({ user:cu.username, action:"Logout", time:new Date().toLocaleString("ka-GE") });
+    await DataStore.saveLogs(logs);
   }
-}
-migrateOldDatesForUser(currentUser);
-
-function parseDDMMYYYY(str){
-  const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(str || "");
-  if (!m) return new Date(0);
-  const [ , dd, mm, yyyy ] = m;
-  return new Date(parseInt(yyyy,10), parseInt(mm,10)-1, parseInt(dd,10));
+  DataStore.clearCurrentUser();
+  window.location.href = "login.html";
 }
 
-/* ===== Renderers (kept) ===== */
-function renderUserInfo() {
-  const infoDiv = document.getElementById("userInfo");
-  if(!currentUser){ infoDiv.innerHTML="<div>მომხმარებელი ვერ მოიძებნა</div>"; return; }
+/* ===== State ===== */
+let users = [];
+let currentUser = null;
+let services = []; // currentUser.services
+let editIndex = -1;
 
-  let devicesList = "არ არის მითითებული";
-  if (currentUser.devices && currentUser.devices.length > 0){
-    const d = currentUser.devices[0];
-    if (typeof d === "object") {
-      const m = d.model || "";
-      const s = (d.serial || "").trim();
-      devicesList = s ? `${m} | ${s}` : m;
-    } else {
-      devicesList = d;
-    }
+(async function init(){
+  await DataStore.init();
+
+  const cu = DataStore.getCurrentUser();
+  if(!cu){ window.location.href="login.html"; return; }
+
+  // sidebar role
+  const settingsLink = document.getElementById("settingsLink");
+  const profileLink  = document.getElementById("profileLink");
+  if (settingsLink && profileLink){
+    if (isAdmin()){ settingsLink.style.display="block"; profileLink.style.display="none"; }
+    else { settingsLink.style.display="none"; profileLink.style.display="block"; }
   }
 
-  infoDiv.innerHTML = `
-    <div><strong>ID:</strong> ${currentUser.id}</div>
-    <div><strong>დასახელება:</strong> ${currentUser.name}</div>
-    <div><strong>საიდენთიფიკაციო კოდი:</strong> ${currentUser.code || ""}</div>
-    <div><strong>მისამართი:</strong> ${currentUser.address || ""}</div>
-    <div><strong>ტელეფონი:</strong> ${currentUser.phone || ""}</div>
-    <div><strong>საკონტაქტო პირი:</strong> ${currentUser.contact || ""}</div>
-    <div><strong>აპარატი:</strong> ${devicesList}</div>
+  // pick selected user from session
+  const selectedId = DataStore.getSelectedUser();
+  if(!selectedId){ window.location.href = "main.html"; return; }
+
+  users = await DataStore.getUsers();
+  currentUser = users.find(u => String(u.id) === String(selectedId)) || null;
+  if(!currentUser){ window.location.href = "main.html"; return; }
+
+  if (!Array.isArray(currentUser.services)) currentUser.services = [];
+  services = currentUser.services;
+
+  // date picker
+  flatpickr("#serviceDate", { dateFormat: "Y-m-d" });
+
+  renderUserInfo();
+  renderServices();
+})();
+
+/* ===== Renderers ===== */
+function renderUserInfo(){
+  const info = document.getElementById("userInfo");
+  const u = currentUser || {};
+  const device = (u.devices && u.devices[0]) ? `${u.devices[0].model||""} ${u.devices[0].serial?("• "+u.devices[0].serial):""}` : "";
+  info.innerHTML = `
+    <div class="row"><div class="key">ID</div><div class="val">${u.id||""}</div></div>
+    <div class="row"><div class="key">დასახელება</div><div class="val">${u.name||""}</div></div>
+    <div class="row"><div class="key">კოდი</div><div class="val">${u.code||""}</div></div>
+    <div class="row"><div class="key">მისამართი</div><div class="val">${u.address||""}</div></div>
+    <div class="row"><div class="key">ტელეფონი</div><div class="val">${u.phone||""}</div></div>
+    <div class="row"><div class="key">კონტაქტი</div><div class="val">${u.contact||""}</div></div>
+    <div class="row"><div class="key">მოწყობილობა</div><div class="val">${device}</div></div>
   `;
 }
 
-function updateUserRevenueBadge(){
-  const revBox = document.getElementById("userRevenue");
-  if (isTech()) { revBox.style.display = "none"; return; }
-
-  const total = (currentUser.services || []).reduce((sum, s)=>{
-    const p = parseFloat(s.price || 0);
-    return sum + (isNaN(p) ? 0 : p);
-  }, 0);
-  document.getElementById("userRevenueValue").textContent = total.toFixed(2) + " ₾";
-  revBox.style.display = "inline-block";
-}
-
-function renderServices() {
-  const tbody = document.getElementById("serviceTable").tBodies[0];
+function renderServices(){
+  const tbody = document.getElementById("serviceTableBody");
+  if (!tbody) return;
   tbody.innerHTML = "";
-  if(!currentUser.services) currentUser.services=[];
 
-  const addBtn = document.getElementById("addServiceBtn");
-  if (addBtn) addBtn.style.display = isViewer() ? "none" : "inline-block";
+  // filters
+  const fp = (document.getElementById("filterPurpose")?.value || "").trim();
+  const ft = (document.getElementById("filterTechnician")?.value || "").trim().toLowerCase();
 
-  const items = currentUser.services.map((s,i)=>({s,i}));
-  items.sort((a,b)=> parseDDMMYYYY(b.s.date) - parseDDMMYYYY(a.s.date));
+  let count = 0;
+  let revenue = 0;
 
-  items.forEach(({s, i:origIndex})=>{
-    const docLink = (s.doc && s.doc instanceof File) 
-      ? `<a class="file-link" href="${URL.createObjectURL(s.doc)}" target="_blank">${s.doc.name}</a>` 
-      : "";
+  services
+    .filter(s => {
+      const okPurpose = fp ? (String(s.purpose||"") === fp) : true;
+      const okTech = ft ? String(s.technician||"").toLowerCase().includes(ft) : true;
+      return okPurpose && okTech;
+    })
+    .forEach((s, idx) => {
+      count++;
+      const price = Number(s.price || 0);
+      if (!isNaN(price)) revenue += price;
 
-    const photosLinks = (s.photos && s.photos.length>0) 
-      ? s.photos.map((p,photoIdx)=> p instanceof File 
-          ? `<a href="#" class="file-link" onclick="openPhotoLightboxService(${origIndex},${photoIdx});return false;">Photo ${photoIdx+1}</a>` 
-          : "").join("<br>") 
-      : "";
+      const tr = document.createElement("tr");
+      const hasPhoto = !!(s.photos && String(s.photos).trim());
 
-    let actionHtml = "";
-    if (!isViewer()) {
-      actionHtml = `
-        <button class="btn-small btn-edit" onclick="editService(${origIndex})">რედაქტირება</button>
-        <button class="btn-small btn-delete" onclick="deleteService(${origIndex})">წაშლა</button>
+      tr.innerHTML = `
+        <td>${s.date || ""}</td>
+        <td>${s.purpose || ""}</td>
+        <td>${s.doc || ""}</td>
+        <td>${hasPhoto ? `<a href="javascript:void(0)" onclick="openLightbox('${escapeHtml(s.photos)}')">ნახვა</a>`:"—"}</td>
+        <td>${isNaN(price) ? "" : (price.toFixed(2)+" ₾")}</td>
+        <td>${s.technician || ""}</td>
+        <td>
+          ${isViewer() ? "" : `
+          <button class="btn-small" style="background:#0ea5e9;color:#fff;border:none;border-radius:8px;padding:6px 10px" onclick="openServiceForm(${idx})">რედაქტირება</button>
+          <button class="btn-small" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:6px 10px" onclick="deleteService(${idx})">წაშლა</button>`}
+        </td>
       `;
-    }
+      tbody.appendChild(tr);
+    });
 
-    const row = tbody.insertRow();
-    row.innerHTML = `
-      <td>${s.date}</td>
-      <td>${s.purpose}</td>
-      <td>${docLink}</td>
-      <td>${photosLinks}</td>
-      <td>${s.price}</td>
-      <td>${s.technician || "-"}</td>
-      <td>${actionHtml}</td>`;
-  });
-
-  document.getElementById("serviceCount").innerText=currentUser.services.length;
-  updateUserRevenueBadge();
-  filterTable();
+  document.getElementById("serviceCount").textContent = String(count);
+  document.getElementById("userRevenueValue").textContent = revenue.toFixed(2) + " ₾";
 }
 
-/* ===== Form handlers (kept) ===== */
-function openServiceForm() {
-  if (isViewer()) { alert("დაშვება მხოლოდ Admin/Technician როლებისთვის."); return; }
-  editingIndex=null;
-  document.getElementById("modalTitle").innerText="ახალი სერვისი";
-  document.getElementById("serviceDate").value="";
-  document.getElementById("servicePurposeSelect").selectedIndex=0;
-  document.getElementById("serviceDoc").value="";
-  document.getElementById("servicePhotos").value="";
-  document.getElementById("servicePrice").value="";
-  document.getElementById("serviceTechnician").selectedIndex=0;
-  document.getElementById("serviceModal").style.display="block";
+/* ===== Lightbox ===== */
+function openLightbox(src){
+  const lb = document.getElementById("photoLightbox");
+  const img = document.getElementById("lightboxImage");
+  if (!lb || !img) return;
+  img.src = src;
+  lb.style.display = "block";
 }
-function closeServiceForm(){ document.getElementById("serviceModal").style.display="none"; }
+function closeLightbox(){
+  const lb = document.getElementById("photoLightbox");
+  if (lb) lb.style.display = "none";
+}
 
-function saveService() {
-  if (isViewer()) { alert("დაშვება მხოლოდ Admin/Technician როლებისთვის."); return; }
-  const date=document.getElementById("serviceDate").value;
-  const purpose=document.getElementById("servicePurposeSelect").value;
-  const doc=document.getElementById("serviceDoc").files[0];
-  const photos=Array.from(document.getElementById("servicePhotos").files);
-  const price=document.getElementById("servicePrice").value;
-  const technician=document.getElementById("serviceTechnician").value;
+/* ===== Helpers ===== */
+function escapeHtml(s){
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
 
-  if(!date || !purpose || !price){ alert("ყველა სავალდებულო ველი შეავსეთ!"); return; }
+/* ===== Modal open/close ===== */
+function openServiceForm(index=-1){
+  if (isViewer()) return alert("დაშვება მხოლოდ Admin/Technician როლებისთვის.");
+  editIndex = index;
 
-  if(editingIndex!==null){
-    let s=currentUser.services[editingIndex];
-    s.date=date; s.purpose=purpose; s.price=price; s.technician=technician;
-    if(doc) s.doc=doc;
-    if(photos.length>0) s.photos=photos;
+  const m = document.getElementById("serviceModal");
+  const title = document.getElementById("modalTitle");
+  const d = document.getElementById("serviceDate");
+  const p = document.getElementById("servicePurposeSelect");
+  const doc = document.getElementById("serviceDoc");
+  const ph = document.getElementById("servicePhotos");
+  const pr = document.getElementById("servicePrice");
+  const t = document.getElementById("serviceTechnician");
+
+  if (index >= 0) {
+    const s = services[index];
+    title.textContent = "სერვისის რედაქტირება";
+    d.value = s.date || "";
+    p.value = s.purpose || "წმენდა";
+    doc.value = s.doc || "";
+    ph.value = s.photos || "";
+    pr.value = s.price || "";
+    t.value = s.technician || "";
   } else {
-    currentUser.services.push({date,purpose,doc,photos,price,technician});
+    title.textContent = "სერვისის დამატება";
+    d.value = new Date().toISOString().slice(0,10);
+    p.value = "წმენდა";
+    doc.value = "";
+    ph.value = "";
+    pr.value = "";
+    t.value = "";
   }
+  if (m) m.style.display = "block";
+}
+function closeServiceForm(){
+  const m = document.getElementById("serviceModal");
+  if (m) m.style.display = "none";
+}
 
-  const idx = users.findIndex(u => u.id === currentUser.id);
-  if (idx !== -1) { users[idx] = currentUser; }
-  localStorage.setItem("users", JSON.stringify(users));
+/* ===== Save/Delete service (SERVER) ===== */
+async function saveService(){
+  if (isViewer()) return alert("დაშვება მხოლოდ Admin/Technician როლებისთვის.");
+  const d = document.getElementById("serviceDate")?.value || "";
+  const p = document.getElementById("servicePurposeSelect")?.value || "";
+  const doc = document.getElementById("serviceDoc")?.value || "";
+  const ph = document.getElementById("servicePhotos")?.value || "";
+  const pr = Number(document.getElementById("servicePrice")?.value || 0);
+  const t = document.getElementById("serviceTechnician")?.value || "";
+
+  const svc = { date:d, purpose:p, doc, photos:ph, price:isNaN(pr)?0:pr, technician:t };
+
+  if (editIndex >= 0) services[editIndex] = svc;
+  else services.unshift(svc);
+
+  // persist user
+  currentUser.services = services;
+  await DataStore.upsertUser(currentUser);
+
+  // refresh from server for consistency
+  const refreshed = await DataStore.getUsers();
+  const id = String(currentUser.id);
+  currentUser = refreshed.find(u => String(u.id) === id) || currentUser;
+  services = Array.isArray(currentUser.services) ? currentUser.services : [];
 
   renderServices();
   closeServiceForm();
 }
 
-function deleteService(idx){
-  if (isViewer()) { alert("დაშვება მხოლოდ Admin/Technician როლებისთვის."); return; }
-  if(confirm("გსურთ წაშლა?")){
-    currentUser.services.splice(idx,1);
-    const idxU = users.findIndex(u => u.id === currentUser.id);
-    if (idxU !== -1) { users[idxU] = currentUser; }
-    localStorage.setItem("users",JSON.stringify(users));
-    renderServices();
-  }
-}
+async function deleteService(index){
+  if (isViewer()) return alert("დაშვება მხოლოდ Admin/Technician როლებისთვის.");
+  if (!confirm("წავშალოთ სერვისი?")) return;
+  services.splice(index, 1);
+  currentUser.services = services;
+  await DataStore.upsertUser(currentUser);
 
-function editService(idx){
-  if (isViewer()) { alert("დაშვება მხოლოდ Admin/Technician როლებისთვის."); return; }
-  const s=currentUser.services[idx];
-  editingIndex=idx;
-  document.getElementById("modalTitle").innerText="სერვისის რედაქტირება";
-  document.getElementById("serviceDate").value=s.date;
-  document.getElementById("servicePurposeSelect").value=s.purpose;
-  document.getElementById("servicePrice").value=s.price;
-  document.getElementById("serviceTechnician").value=s.technician || "ნიკო";
-  document.getElementById("serviceModal").style.display="block";
-}
-
-/* ===== Filters (kept) ===== */
-function filterTable(){
-  const purposeVal=(document.getElementById("filterPurpose").value||"").toLowerCase();
-  const techVal=(document.getElementById("filterTechnician").value||"").toLowerCase();
-  const trs=document.getElementById("serviceTable").tBodies[0].rows;
-  Array.from(trs).forEach(tr=>{
-    const purposeText=tr.cells[1].innerText.toLowerCase();
-    const techText=tr.cells[5].innerText.toLowerCase();
-    const passPurpose = purposeVal ? purposeText.includes(purposeVal) : true;
-    const passTech    = techVal ? techText.includes(techVal) : true;
-    tr.style.display = (passPurpose && passTech) ? "" : "none";
-  });
-}
-
-/* ===== Navigation (kept goBack; added logout + role-based menu) ===== */
-function goBack(){ window.location.href="main.html"; }
-
-function logout(){
-  const cu = JSON.parse(localStorage.getItem("currentUser"));
-  if(cu){
-    const logs=JSON.parse(localStorage.getItem("appLogs")||"[]");
-    logs.unshift({ user:cu.username, action:"Logout", time:new Date().toLocaleString("ka-GE") });
-    localStorage.setItem("appLogs",JSON.stringify(logs));
-  }
-  localStorage.removeItem("currentUser");
-  window.location.href="login.html";
-}
-
-function updateSidebarByRole(){
-  const statsLink = document.getElementById("statsLink");
-  const settingsLink = document.getElementById("settingsLink");
-  const profileLink = document.getElementById("profileLink");
-
-  if (isTech()) {
-    if (statsLink) statsLink.style.display = "none";
-    if (settingsLink) settingsLink.style.display = "none";
-    if (profileLink) profileLink.style.display = "block";
-  } else if (isViewer()) {
-    if (statsLink) statsLink.style.display = "block";
-    if (settingsLink) settingsLink.style.display = "none";
-    if (profileLink) profileLink.style.display = "block";
-  } else if (isAdmin()) {
-    if (statsLink) statsLink.style.display = "block";
-    if (settingsLink) settingsLink.style.display = "block";
-    if (profileLink) profileLink.style.display = "none";
-  }
-}
-updateSidebarByRole();
-
-/* ===== Init (kept) ===== */
-flatpickr("#serviceDate", { dateFormat: "d.m.Y", allowInput: true, clickOpens: true });
-
-if(!currentUser) {
-  // თუ selectedUser არ არის, დავაბრუნოთ მთავარზე
-  window.location.href = "main.html";
-} else {
-  if(!currentUser.services) currentUser.services=[];
-  renderUserInfo();
+  const refreshed = await DataStore.getUsers();
+  const id = String(currentUser.id);
+  currentUser = refreshed.find(u => String(u.id) === id) || currentUser;
+  services = Array.isArray(currentUser.services) ? currentUser.services : [];
   renderServices();
 }
 </script>
-
-<script src="/js/sync-users.js"></script>
-<script>
-  (function boot() {
-    if (window.SansoSync && typeof window.SansoSync.init === 'function') {
-      window.SansoSync.init();
-    } else {
-      console.error('SansoSync not loaded. Check /js/sync-users.js path.');
-    }
-  })();
-  // window.SansoSync.push(); // სურვილისამებრ, როცა შენს არსებულ კოდში users-ს ცვლი/ინახავ
-</script>
-
-<script src="/js/server-store.js"></script>
-
-<script>
-  document.addEventListener('DOMContentLoaded', async () => {
-    try {
-      const remoteUsers =
-        (window.ServerStore && ServerStore.getUsers)
-          ? await ServerStore.getUsers()
-          : [];
-      if (Array.isArray(remoteUsers) && remoteUsers.length) {
-        localStorage.setItem('users', JSON.stringify(remoteUsers));
-      }
-    } catch {}
-  });
-
-  (function () {
-    const _set = localStorage.setItem.bind(localStorage);
-    localStorage.setItem = function (k, v) {
-      _set(k, v);
-      if (k === 'users' && window.ServerStore && ServerStore.saveUsers) {
-        clearTimeout(localStorage.__usersPushT);
-        localStorage.__usersPushT = setTimeout(async () => {
-          try {
-            const cur = JSON.parse(localStorage.getItem('users') || '[]');
-            await ServerStore.saveUsers(cur);
-          } catch {}
-        }, 250);
-      }
-    };
-  })();
-</script>
-
-
 
 </body>
 </html>
