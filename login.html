@@ -243,6 +243,8 @@ footer{
   </div>
 </footer>
 
+<script src="/js/server-storage-bridge.js"></script>
+
 <script>
 /* Seed users */
 (function seedUsers(){
@@ -303,52 +305,6 @@ function doLogin(){
   window.location.href = "main.html";
 }
 </script>
-
-<script src="/js/server-store.js"></script>
-
-<script>
-  // ჩატვირთვაზე: appUsers სერვერიდან localStorage-ში ჩაიწეროს,
-  // რომ შენმა არსებულმა ლოგინმა კვლავ უცვლელად იმუშაოს
-  document.addEventListener('DOMContentLoaded', async () => {
-    try {
-      const remoteAppUsers =
-        (window.ServerStore && ServerStore.getAppUsers)
-          ? await ServerStore.getAppUsers()
-          : [];
-      if (Array.isArray(remoteAppUsers) && remoteAppUsers.length) {
-        localStorage.setItem('appUsers', JSON.stringify(remoteAppUsers));
-      } else {
-        // თუ სერვერზე ჯერ ცარიელია, მიეცი შანსი შენს seed-ს ჩაიწეროს,
-        // და მერე ეგვე აიტანე სერვერზე
-        setTimeout(async () => {
-          try {
-            const seeded = JSON.parse(localStorage.getItem('appUsers') || '[]');
-            if (Array.isArray(seeded) && seeded.length && ServerStore.saveAppUsers) {
-              await ServerStore.saveAppUsers(seeded);
-            }
-          } catch {}
-        }, 500);
-      }
-
-      // ნებისმიერ setItem('appUsers', ...) შემდეგ — ჩუმი push სერვერზე (debounce)
-      const _set = localStorage.setItem.bind(localStorage);
-      localStorage.setItem = function (k, v) {
-        _set(k, v);
-        if (k === 'appUsers' && window.ServerStore && ServerStore.saveAppUsers) {
-          clearTimeout(localStorage.__appUsersPushT);
-          localStorage.__appUsersPushT = setTimeout(async () => {
-            try {
-              const cur = JSON.parse(localStorage.getItem('appUsers') || '[]');
-              await ServerStore.saveAppUsers(cur);
-            } catch {}
-          }, 300);
-        }
-      };
-    } catch {}
-  });
-</script>
-
-
 
 </body>
 </html>

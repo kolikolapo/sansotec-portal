@@ -231,6 +231,8 @@ a.file-link { color:#282828; text-decoration:underline; }
   </div>
 </div>
 
+<script src="/js/server-storage-bridge.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
 /* ===== Guard (unchanged) ===== */
@@ -498,51 +500,6 @@ if(!currentUser) {
   renderServices();
 }
 </script>
-
-<script src="/js/sync-users.js"></script>
-<script>
-  (function boot() {
-    if (window.SansoSync && typeof window.SansoSync.init === 'function') {
-      window.SansoSync.init();
-    } else {
-      console.error('SansoSync not loaded. Check /js/sync-users.js path.');
-    }
-  })();
-  // window.SansoSync.push(); // სურვილისამებრ, როცა შენს არსებულ კოდში users-ს ცვლი/ინახავ
-</script>
-
-<script src="/js/server-store.js"></script>
-
-<script>
-  document.addEventListener('DOMContentLoaded', async () => {
-    try {
-      const remoteUsers =
-        (window.ServerStore && ServerStore.getUsers)
-          ? await ServerStore.getUsers()
-          : [];
-      if (Array.isArray(remoteUsers) && remoteUsers.length) {
-        localStorage.setItem('users', JSON.stringify(remoteUsers));
-      }
-    } catch {}
-  });
-
-  (function () {
-    const _set = localStorage.setItem.bind(localStorage);
-    localStorage.setItem = function (k, v) {
-      _set(k, v);
-      if (k === 'users' && window.ServerStore && ServerStore.saveUsers) {
-        clearTimeout(localStorage.__usersPushT);
-        localStorage.__usersPushT = setTimeout(async () => {
-          try {
-            const cur = JSON.parse(localStorage.getItem('users') || '[]');
-            await ServerStore.saveUsers(cur);
-          } catch {}
-        }, 250);
-      }
-    };
-  })();
-</script>
-
 
 
 </body>

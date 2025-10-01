@@ -137,8 +137,11 @@ tr:hover { background:#fafafa; }
   </div>
 </div>
 
+<script src="/js/server-storage-bridge.js"></script>
+
+
 <script>
-/* Role helpers */
+/* ===== Role helpers (როგორც გქონდა) ===== */
 function getRole(){
   const cu = JSON.parse(localStorage.getItem("currentUser")||"null");
   return cu?.role || "Viewer";
@@ -149,69 +152,45 @@ function isViewer(){ return getRole()==="Viewer"; }
 
 function updateUIByRole(){
   const settingsLink = document.getElementById("settingsLink");
-  if (isTech()) {
-    settingsLink.style.display = "none";
-  } else if (isViewer()) {
-    settingsLink.style.display = "none";
-  } else if (isAdmin()) {
-    settingsLink.style.display = "block";
-  }
+  if (isTech() || isViewer()) settingsLink.style.display = "none";
+  else if (isAdmin()) settingsLink.style.display = "block";
 }
 updateUIByRole();
 
-/* Data */
-const users = JSON.parse(localStorage.getItem("users")) || [];
-const services = users.flatMap(u => (u.services || []).map(s => ({...s})));
-
+/* ===== დამხმარეები თარიღებისთვის (ემსახურება dd.mm.yyyy და yyyy-mm(-dd) ორივეს) ===== */
 function parsePrice(val){
   const num = parseFloat(val);
   return isNaN(num) ? 0 : num;
 }
 function monthKey(dateStr){
   if(!dateStr) return null;
-  const m = dateStr.match(/^(\d{4})-(\d{2})/);
-  return m ? `${m[1]}-${m[2]}` : null;
+
+  // dd.mm.yyyy
+  let m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(dateStr);
+  if (m) { const [, dd, mm, yyyy] = m; return `${yyyy}-${mm}`; }
+
+  // yyyy-mm ან yyyy-mm-dd
+  m = /^(\d{4})-(\d{2})/.exec(dateStr);
+  if (m) { const [, yyyy, mm] = m; return `${yyyy}-${mm}`; }
+
+  return null;
 }
 function yearKey(dateStr){
   if(!dateStr) return null;
-  const m = dateStr.match(/^(\d{4})/);
-  return m ? m[1] : null;
+
+  // dd.mm.yyyy
+  let m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(dateStr);
+  if (m) return m[3];
+
+  // yyyy ან yyyy-mm(-dd)
+  m = /^(\d{4})/.exec(dateStr);
+  if (m) return m[1];
+
+  return null;
 }
-
-const visitsByMonth = {};
-const visitsByYear = {};
-const revenueByMonth = {};
-const revenueByYear = {};
-
-let totalVisits = 0;
-let totalRevenue = 0;
-
-services.forEach(s=>{
-  const mk = monthKey(s.date);
-  const yk = yearKey(s.date);
-  const price = parsePrice(s.price);
-
-  if(mk){
-    visitsByMonth[mk] = (visitsByMonth[mk] || 0) + 1;
-    revenueByMonth[mk] = (revenueByMonth[mk] || 0) + price;
-  }
-  if(yk){
-    visitsByYear[yk] = (visitsByYear[yk] || 0) + 1;
-    revenueByYear[yk] = (revenueByYear[yk] || 0) + price;
-  }
-  totalVisits += 1;
-  totalRevenue += price;
-});
-
 const gel = new Intl.NumberFormat('ka-GE', {minimumFractionDigits:2, maximumFractionDigits:2});
-
-function sortMonthKeys(keys){
-  return keys.sort((a,b)=> new Date(a+"-01") - new Date(b+"-01"));
-}
-function sortYearKeys(keys){
-  return keys.sort((a,b)=> parseInt(a) - parseInt(b));
-}
-
+function sortMonthKeys(keys){ return keys.sort((a,b)=> new Date(a+"-01") - new Date(b+"-01")); }
+function sortYearKeys(keys){ return keys.sort((a,b)=> parseInt(a) - parseInt(b)); }
 function renderTable(tableId, dataObj, isMoney=false, sorter){
   const tbody = document.getElementById(tableId).tBodies[0];
   tbody.innerHTML = "";
@@ -224,15 +203,62 @@ function renderTable(tableId, dataObj, isMoney=false, sorter){
   });
 }
 
-renderTable("visitsByMonth", visitsByMonth, false, sortMonthKeys);
-renderTable("visitsByYear", visitsByYear, false, sortYearKeys);
-renderTable("revenueByMonth", revenueByMonth, true, sortMonthKeys);
-renderTable("revenueByYear", revenueByYear, true, sortYearKeys);
+/* ===== ძირითადი აგრეგაცია (ამ ფუნქციაში გატანილია შენი მთელი გამოთვლები) ===== */
+function buildStats(){
+  const users = JSON.parse(localStorage.getItem("users") || "[]");
+  const services = users.flatMap(u => (u.services || []).map(s => ({...s})));
 
-document.getElementById("totalVisits").textContent = totalVisits;
-document.getElementById("totalRevenue").textContent = gel.format(totalRevenue);
+  const visitsByMonth = {};
+  const visitsByYear  = {};
+  const revenueByMonth = {};
+  const revenueByYear  = {};
 
-/* Logout */
+  let totalVisits = 0;
+  let totalRevenue = 0;
+
+  services.forEach(s=>{
+    const mk = monthKey(s.date);
+    const yk = yearKey(s.date);
+    const price = parsePrice(s.price);
+
+    if(mk){
+      visitsByMonth[mk]  = (visitsByMonth[mk]  || 0) + 1;
+      revenueByMonth[mk] = (revenueByMonth[mk] || 0) + price;
+    }
+    if(yk){
+      visitsByYear[yk]  = (visitsByYear[yk]  || 0) + 1;
+      revenueByYear[yk] = (revenueByYear[yk] || 0) + price;
+    }
+    totalVisits += 1;
+    totalRevenue += price;
+  });
+
+  renderTable("visitsByMonth",  visitsByMonth,  false, sortMonthKeys);
+  renderTable("visitsByYear",   visitsByYear,   false, sortYearKeys);
+  renderTable("revenueByMonth", revenueByMonth, true,  sortMonthKeys);
+  renderTable("revenueByYear",  revenueByYear,  true,  sortYearKeys);
+
+  document.getElementById("totalVisits").textContent  = totalVisits;
+  document.getElementById("totalRevenue").textContent = gel.format(totalRevenue);
+}
+
+/* ===== ჩატვირთვაზე — პირველად ვცდილობთ სერვერიდან users ამოვიღოთ, მერე ვაგრეგირებთ ===== */
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    if (window.ServerStore && ServerStore.getUsers) {
+      const remoteUsers = await ServerStore.getUsers();
+      if (Array.isArray(remoteUsers) && remoteUsers.length) {
+        localStorage.setItem('users', JSON.stringify(remoteUsers));
+        buildStats(); // render with fresh server data
+        return;
+      }
+    }
+  } catch {}
+  // fallback: რაც localStorage-შია, იმით მაინც ააგე ცხრილები
+  buildStats();
+});
+
+/* ===== Logout (როგორც გქონდა) ===== */
 function logout(){
   const cu = JSON.parse(localStorage.getItem("currentUser"));
   if(cu){

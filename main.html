@@ -185,6 +185,8 @@ tr:hover { background:#f7f7f7; cursor:pointer;}
   </div>
 </div>
 
+<script src="/js/server-storage-bridge.js"></script>
+
 <script>
 /* ===== Guard ===== */
 (function(){
@@ -479,41 +481,38 @@ function logout(){
   localStorage.removeItem("currentUser");
   window.location.href="login.html";
 }
-
-renderUsers();
 </script>
 
-<script src="/js/sync-users.js"></script>
 <script>
-  (function boot() {
-    if (window.SansoSync && typeof window.SansoSync.init === 'function') {
-      window.SansoSync.init();
-    } else {
-      console.error('SansoSync not loaded. Check /js/sync-users.js path.');
-    }
-  })();
-  // window.SansoSync.push(); // სურვილისამებრ, როცა შენს არსებულ კოდში users-ს ცვლი/ინახავ
-</script>
-
-<script src="/js/server-store.js"></script>
-
-<script>
-  // ჩატვირთვაზე: users სერვერიდან localStorage-ში ჩაიწეროს,
-  // რომ შენი არსებული users-ცხრილმა უცვლელად იმუშაოს
-  document.addEventListener('DOMContentLoaded', async () => {
+  (async function initMain() {
     try {
-      const remoteUsers =
-        (window.ServerStore && ServerStore.getUsers)
-          ? await ServerStore.getUsers()
-          : [];
-      if (Array.isArray(remoteUsers) && remoteUsers.length) {
-        localStorage.setItem('users', JSON.stringify(remoteUsers));
-      }
-    } catch {}
-  });
+      // სცადე სერვერიდან users წამოღება
+      const remote = (window.ServerStore && ServerStore.getUsers)
+        ? await ServerStore.getUsers()
+        : [];
 
-  // ნებისმიერ setItem('users', ...) შემდეგ — ჩუმი push სერვერზე (debounce)
-  (function () {
+      if (Array.isArray(remote) && remote.length) {
+        // ჩაწერე localStorage-ში და ასევე მოახეზე გლობალურ ცვლადზე
+        localStorage.setItem('users', JSON.stringify(remote));
+        users = remote;
+        // ✅ სერვერიდან მოსულ users-ზეც გავუშვათ ნორმალიზაცია
+        normalizeDevicesToSingle();
+      } else {
+        // თუ სერვერი ცარიელია, მაგრამ ამ ბრაუზერში ადგილობრივად გაქვს მონაცემი,
+        // ატვირთე სერვერზე, რომ სხვა ბრაუზერებშიც გამოჩნდეს
+        const local = JSON.parse(localStorage.getItem('users') || '[]');
+        if (Array.isArray(local) && local.length && window.ServerStore && ServerStore.saveUsers) {
+          try { await ServerStore.saveUsers(local); } catch (e) {}
+        }
+      }
+    } catch (e) {
+      // ჩუმად ჩავაგდოთ, რომ UI იმუშავოს როგორცაა
+    }
+
+    // ამოახატე ცხრილი სერვერზე სინქრის შემდეგ
+    renderUsers();
+
+    // დააწვდინე სერვერს ყველა მომდევნო ცვლილება (debounce)
     const _set = localStorage.setItem.bind(localStorage);
     localStorage.setItem = function (k, v) {
       _set(k, v);
@@ -523,15 +522,12 @@ renderUsers();
           try {
             const cur = JSON.parse(localStorage.getItem('users') || '[]');
             await ServerStore.saveUsers(cur);
-          } catch {}
+          } catch (e) {}
         }, 250);
       }
     };
   })();
 </script>
-
-
-
 
 </body>
 </html>

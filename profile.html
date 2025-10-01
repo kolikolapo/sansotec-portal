@@ -128,6 +128,8 @@ th { background:#f2f6ff; color:#222; }
   </div>
 </div>
 
+<script src="/js/server-storage-bridge.js"></script>
+
 <script>
 /* ===== Guard: მხოლოდ ავტორიზებული ===== */
 (function guard(){
@@ -254,23 +256,9 @@ function logout(){
 }
 </script>
 
-<script src="/js/sync-users.js"></script>
-<script>
-  (function boot() {
-    if (window.SansoSync && typeof window.SansoSync.init === 'function') {
-      window.SansoSync.init();
-    } else {
-      console.error('SansoSync not loaded. Check /js/sync-users.js path.');
-    }
-  })();
-  // window.SansoSync.push(); // სურვილისამებრ, როცა შენს არსებულ კოდში users-ს ცვლი/ინახავ
-</script>
-
-<script src="/js/server-store.js"></script>
-
 <script>
   // ჩატვირთვაზე: appUsers სერვერიდან localStorage-ში ჩაიწეროს,
-  // რომ არსებული UI/ფუნქციები უცვლელად იმუშაოს
+  // და preload-ის შემდეგ ფორმაც განახლდეს
   document.addEventListener('DOMContentLoaded', async () => {
     try {
       const remote =
@@ -279,6 +267,9 @@ function logout(){
           : [];
       if (Array.isArray(remote) && remote.length) {
         localStorage.setItem('appUsers', JSON.stringify(remote));
+        // 👇 ახალი ხაზები:
+        appUsers = JSON.parse(localStorage.getItem('appUsers') || '[]');
+        loadForm();
       }
     } catch {}
   });
@@ -300,7 +291,6 @@ function logout(){
     };
   })();
 </script>
-
 
 
 </body>
