@@ -46,24 +46,15 @@
   // თუ სერვერი ინახავს „რისაც მივცემთ“, მაშინ ჯობს ყოველთვის ერთ ობიექტად შევინახოთ.
   // მაგრამ თუ ამჟამად ფაილი ბრტყელი მასივია (ძველი ფორმატი), მაშინ users-ს შევინახავთ ბრტყლად,
   // რათა უკუქომპატიბელური ვიყოთ.
-  async function saveBoth({users=[], appUsers=[]}){
-    // გავიგოთ, რა ფორმატშია ახლა სერვერზე
-    const raw = await fetchJSON(`${WORKER_BASE}/get-users`, { method:'GET' });
-    let body;
-    if (Array.isArray(raw)) {
-      // სერვერზე ძველი ფორმატია (ბრტყელი მასივი) → users-ის ბრტყლად შენახვა
-      body = Array.isArray(users) ? users : [];
-    } else {
-      // ობიექტური ფორმატი → users/appUsers ერთად
-      body = { users: Array.isArray(users)?users:[], appUsers: Array.isArray(appUsers)?appUsers:[] };
-    }
-    // ჩუმი შენახვა
-    await fetchJSON(`${WORKER_BASE}/save-users`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(body)
-    });
-  }
+  // რაც არ უნდა აბრუნებდეს GET, users-ს შევინახავთ ბრტყელ მასივად — ესაა ყველაზე
+  // უკუქომპატიბელური ფორმატი Cloudflare Worker-ის მაგალითში.
+  const body = Array.isArray(users) ? users : [];
+  await fetchJSON(`${WORKER_BASE}/save-users`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+}
 
   async function getUsers(){
     const { users } = await getBoth();
