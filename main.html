@@ -232,6 +232,15 @@ function normalizeDevicesToSingle() {
   if (changed) localStorage.setItem("users", JSON.stringify(users));
 }
 normalizeDevicesToSingle();
+// --- NEW: explicit “push now” helper; does NOT change UI/UX ---
+async function syncUsersToServer() {
+  try {
+    const cur = JSON.parse(localStorage.getItem('users') || '[]');
+    if (Array.isArray(cur) && window.ServerStore && ServerStore.saveUsers) {
+      await ServerStore.saveUsers(cur);
+    }
+  } catch (e) { /* silent */ }
+}
 
 function deviceDisplayOne(u){
   if (!u.devices || !u.devices.length) return "";
@@ -400,7 +409,9 @@ function saveUser() {
   }
 
   localStorage.setItem("users", JSON.stringify(users));
-  renderUsers();
+  
+  syncUsersToServer(); // NEW
+renderUsers();
   closeUserForm();
 }
 
@@ -445,7 +456,9 @@ function deleteUser(index) {
   if(confirm("ნამდვილად გსურთ წაშლა?")){
     users.splice(index,1);
     localStorage.setItem("users", JSON.stringify(users));
-    renderUsers();
+    
+    syncUsersToServer(); // NEW
+renderUsers();
   }
 }
 
