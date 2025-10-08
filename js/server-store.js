@@ -36,7 +36,7 @@
   }
 
   async function getBoth(){
-    const raw = await fetchJSON(`${WORKER_BASE}/get-users?ts=${Date.now()}`, { method:'GET', cache:'no-store' });
+    const raw = await fetchJSON(`${WORKER_BASE}/get-users`, { method:'GET' });
     const both = extractUsersShape(raw || {});
     // მცირე დიაგნოსტიკა (კონსოლში დაიბეჭდება მხოლოდ დეველოპერულად)
     try{ console.debug('[ServerStore] getBoth:', { users: both.users.length, appUsers: both.appUsers.length }); }catch{}
@@ -49,11 +49,7 @@
   // რაც არ უნდა აბრუნებდეს GET, users-ს შევინახავთ ბრტყელ მასივად — ესაა ყველაზე
   // უკუქომპატიბელური ფორმატი Cloudflare Worker-ის მაგალითში.
   const body = Array.isArray(users) ? users : [];
-  await fetchJSON(`${WORKER_BASE}/save-users`, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(body)
-  });
+  await fetchJSON(`${WORKER_BASE}/save-users`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ users: body }) });
 }
 
   async function getUsers(){
