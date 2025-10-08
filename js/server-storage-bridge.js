@@ -45,7 +45,7 @@
   } catch {}
 
   async function pullFromServer() {
-    const raw = await fetchJSON(`${WORKER_BASE}/get-users`, { method: 'GET' });
+    const raw = await fetchJSON(`${WORKER_BASE}/get-users?ts=${Date.now()}`, { method: 'GET', cache: 'no-store' });
     const s = shape(raw || {});
     const u = asArray(s.users);    if (u.length) cache.users = u;
     const a = asArray(s.appUsers); if (a.length) cache.appUsers = a;

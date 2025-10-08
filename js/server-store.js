@@ -36,7 +36,7 @@
   }
 
   async function getBoth(){
-    const raw = await fetchJSON(`${WORKER_BASE}/get-users`, { method:'GET' });
+    const raw = await fetchJSON(`${WORKER_BASE}/get-users?ts=${Date.now()}`, { method:'GET', cache:'no-store' });
     const both = extractUsersShape(raw || {});
     // მცირე დიაგნოსტიკა (კონსოლში დაიბეჭდება მხოლოდ დეველოპერულად)
     try{ console.debug('[ServerStore] getBoth:', { users: both.users.length, appUsers: both.appUsers.length }); }catch{}
