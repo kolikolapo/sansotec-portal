@@ -138,14 +138,14 @@
     pushToServerDebounced();
   };
 
-  // ბრაუზერის დახურვაზე თუ რამე ბაკლოგი დარჩა — ჩუმად გავუშვათ
-  window.addEventListener('beforeunload', () => {
-    if (Array.isArray(cache.users)) {
-      try {
-        navigator.sendBeacon?.(`${WORKER_BASE}/save-users`, bodyForSave());
-      } catch {}
-    }
-  });
+// ბრაუზერის დახურვაზე: ცარიელს არ ვაგზავნით, რომ სერვერი არ გადაეწეროს []
+window.addEventListener('beforeunload', () => {
+  if (Array.isArray(cache.users) && cache.users.length > 0) {
+    try {
+      navigator.sendBeacon?.(`${WORKER_BASE}/save-users`, bodyForSave());
+    } catch {}
+  }
+});
 
   // სტარტზე სერვერიდან წავიღოთ
   pullFromServer();
