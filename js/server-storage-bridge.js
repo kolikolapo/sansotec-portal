@@ -45,27 +45,10 @@
   } catch {}
 
   async function pullFromServer() {
-    const raw = await fetchJSON(`${WORKER_BASE}/get-users?ts=${Date.now()}`, { method: 'GET', cache: 'no-store' });
+    const raw = await fetchJSON(`${WORKER_BASE}/get-users`, { method: 'GET' });
     const s = shape(raw || {});
     const u = asArray(s.users);    if (u.length) cache.users = u;
     const a = asArray(s.appUsers); if (a.length) cache.appUsers = a;
-  // --- NEW: Auto-seed once if server is empty but local has users ---
-  if (!u.length && !a.length) {
-    const localUsers = safeParse(localStorage.getItem('users'), []);
-    if (Array.isArray(localUsers) && localUsers.length) {
-      try {
-        cache.users = localUsers; // use local as immediate cache to render
-        await fetchJSON(`${WORKER_BASE}/save-users`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          cache: 'no-store',
-          body: JSON.stringify(localUsers)
-        });
-        // Optional re-pull could go here if needed.
-      } catch {}
-    }
-  }
-
     const l = asArray(s.appLogs);  if (l.length) cache.appLogs = l;
 
     // სერვერიდან რაც მოვიდა, ჩავწეროთ ნამდვილ localStorage-შიც,
@@ -80,7 +63,7 @@
 
   // Worker /save-users ელოდება სუფთა users მასივს
   function bodyForSave() {
-    return JSON.stringify(Array.isArray(cache.users) ? cache.users : []);
+    return JSON.stringify({ users: Array.isArray(cache.users) ? cache.users : [] });
   }
 
   async function pushToServerDebounced() {
