@@ -188,8 +188,8 @@ tr:hover { background:#f7f7f7; cursor:pointer;}
 <script src="/js/server-storage-bridge.js"></script>
 
 <script>
-  // თუ localStorage ცარიელია, გახსნისას ერთი ჯერზე ჩამოიტანე სერვერიდან და მერე დახატე ცხრილი
-  (async function bootstrapFromServerIfEmpty(){
+  // ახალ ვერსიაში ვაკეთებთ *ფუნქციას* (არა IIFE-ს), რათა სხვა კოდმა შეძლოს "await"-ით დალოდება
+  window.bootstrapFromServerIfEmpty = async function () {
     try {
       const cur = JSON.parse(localStorage.getItem('users') || '[]');
       if (!Array.isArray(cur) || cur.length === 0) {
@@ -197,16 +197,12 @@ tr:hover { background:#f7f7f7; cursor:pointer;}
         const j = await r.json();
         if (Array.isArray(j?.users) && j.users.length > 0) {
           localStorage.setItem('users', JSON.stringify(j.users));
-          // თუ უკვე გაქვს აღწერილი renderUsers(), ახლა გამოიძახე რომ ცხრილი დაიხატოს
-          if (typeof renderUsers === 'function') {
-            renderUsers();
-          }
         }
       }
-    } catch(e) {
+    } catch (e) {
       console.warn('bootstrapFromServerIfEmpty:', e);
     }
-  })();
+  };
 </script>
 
 
@@ -522,33 +518,34 @@ function logout(){
 <script>
   (async function initMain() {
     try {
-      // სცადე სერვერიდან users წამოღება
-      const remote = (window.ServerStore && ServerStore.getUsers)
-        ? await ServerStore.getUsers()
-        : [];
+      // ① ჯერ დაელოდე bootstrap-ს: თუ localStorage ცარიელია, ჩამოიტანს სერვერიდან
+      if (typeof window.bootstrapFromServerIfEmpty === 'function') {
+        await window.bootstrapFromServerIfEmpty();
+      }
 
-      if (Array.isArray(remote) && remote.length) {
-        // ჩაწერე localStorage-ში და ასევე მოახეზე გლობალურ ცვლადზე
-        localStorage.setItem('users', JSON.stringify(remote));
-        users = remote;
-        // ✅ სერვერიდან მოსულ users-ზეც გავუშვათ ნორმალიზაცია
-        normalizeDevicesToSingle();
-      } else {
-        // თუ სერვერი ცარიელია, მაგრამ ამ ბრაუზერში ადგილობრივად გაქვს მონაცემი,
-        // ატვირთე სერვერზე, რომ სხვა ბრაუზერებშიც გამოჩნდეს
-        const local = JSON.parse(localStorage.getItem('users') || '[]');
-        if (Array.isArray(local) && local.length && window.ServerStore && ServerStore.saveUsers) {
-          try { await ServerStore.saveUsers(local); } catch (e) {}
-        }
+      // ② ამის შემდეგ წაიკითხე users ლოკალიდან და დაანორმალე
+      users = JSON.parse(localStorage.getItem('users') || '[]');
+      normalizeDevicesToSingle();
+
+      // ③ თუ მაინც ცარიელია და გაქვს ServerStore.getUsers, სცადე პირდაპირი წამოღება ერთხელ
+      if ((!Array.isArray(users) || users.length === 0) && window.ServerStore && ServerStore.getUsers) {
+        try {
+          const remote = await ServerStore.getUsers();
+          if (Array.isArray(remote) && remote.length > 0) {
+            localStorage.setItem('users', JSON.stringify(remote));
+            users = remote;
+            normalizeDevicesToSingle();
+          }
+        } catch {}
       }
     } catch (e) {
-      // ჩუმად ჩავაგდოთ, რომ UI იმუშავოს როგორცაა
+      console.warn('initMain bootstrap error:', e);
     }
 
-    // ამოახატე ცხრილი სერვერზე სინქრის შემდეგ
+    // ④ ახლა უკვე დახატე ცხრილი (პირველივე გახსნაზეც სავსე იქნება)
     renderUsers();
 
-    // დააწვდინე სერვერს ყველა მომდევნო ცვლილება (debounce)
+    // ⑤ მომავალ ცვლილებებზე სერვერზე პუში (debounce)
     const _set = localStorage.setItem.bind(localStorage);
     localStorage.setItem = function (k, v) {
       _set(k, v);
