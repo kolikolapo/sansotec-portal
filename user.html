@@ -284,6 +284,20 @@ async function syncUsersToServer() {
   } catch (e) { /* silent */ }
 }
 
+// --- NEW: სერვერიდან users-ის „force refresh“ (ყოველ გახსნაზე) ---
+async function refreshUsersFromServer() {
+  try {
+    if (window.ServerStore && ServerStore.getUsers) {
+      const remote = await ServerStore.getUsers(); // ყოველთვის ვკითხულობთ
+      if (Array.isArray(remote) && remote.length) {
+        localStorage.setItem('users', JSON.stringify(remote));
+      }
+    }
+  } catch (e) {
+    // ჩუმად ჩავდუმდეთ, UI იმუშავებს როგორცაა
+  }
+}
+
 /* ===== Dates migration (kept) ===== */
 function toDisplayDate(str){
   if (!str) return str;
@@ -420,7 +434,7 @@ function openServiceForm() {
 }
 function closeServiceForm(){ document.getElementById("serviceModal").style.display="none"; }
 
-function saveService() {
+async function saveService() {
   if (isViewer()) { alert("დაშვება მხოლოდ Admin/Technician როლებისთვის."); return; }
   const date=document.getElementById("serviceDate").value;
   const purpose=document.getElementById("servicePurposeSelect").value;
@@ -444,27 +458,24 @@ function saveService() {
   if (idx !== -1) { users[idx] = currentUser; }
     // users ჩავწერეთ localStorage-ში
   localStorage.setItem("users", JSON.stringify(users));
+await syncUsersToServer();   // ← დაველოდოთ, რომ სერვერზე ჩაიწეროს
+renderServices();
+closeServiceForm();
 
-  // NEW: სერვერზე პუში
-  syncUsersToServer();
-
-  // რენდერი და დახურვა
-  renderServices();
-  closeServiceForm();
 }
 
 
-function deleteService(idx){
+async function deleteService(idx){
+
   if (isViewer()) { alert("დაშვება მხოლოდ Admin/Technician როლებისთვის."); return; }
   if(confirm("გსურთ წაშლა?")){
     currentUser.services.splice(idx,1);
     const idxU = users.findIndex(u => u.id === currentUser.id);
     if (idxU !== -1) { users[idxU] = currentUser; }
-        localStorage.setItem("users", JSON.stringify(users));
-    // NEW: სერვერზე პუში
-    syncUsersToServer();
-    // რენდერი
-    renderServices();
+	localStorage.setItem("users", JSON.stringify(users));
+	await syncUsersToServer();
+	renderServices();
+
 
   }
 }
@@ -536,12 +547,15 @@ flatpickr("#serviceDate", { dateFormat: "d.m.Y", allowInput: true, clickOpens: t
 // --- NEW: პირველად გახსნისას ჯერ სერვერიდან ჩამოტანა, მერე რენდერი ---
 (async function initUserPage(){
   try {
-    // 1) თუ localStorage ცარიელია — ჩამოიტანს სერვერიდან
+        // 1) ყოველთვის სცადე სერვერიდან ახალი users ჩამოტანა (არ აქვს მნიშვნელობა localStorage ცარიელია თუ არა)
+    await refreshUsersFromServer();
+
+    // 2) თუ რატომღაც სერვერი ვერ წავიკითხეთ და localStorage ცარიელია — fallback ერთი ჯერზე
     if (typeof window.bootstrapFromServerIfEmpty === 'function') {
       await window.bootstrapFromServerIfEmpty();
     }
 
-    // 2) შემდეგ წავიკითხოთ users და ავირჩიოთ მიმდინარე
+    // 3) ახლა წავიკითხოთ users და ავირჩიოთ მიმდინარე
     users = JSON.parse(localStorage.getItem('users') || '[]');
     selectedUserId = localStorage.getItem('selectedUser');
     currentUser = users.find(u => u.id === selectedUserId) || null;
@@ -551,11 +565,7 @@ flatpickr("#serviceDate", { dateFormat: "d.m.Y", allowInput: true, clickOpens: t
       return;
     }
 
-    // 3) უსაფრთხოება
     if (!currentUser.services) currentUser.services = [];
-
-    // (არსებობს შენთან) ძველი თარიღების მიგრაცია, თუ გჭირდება:
-    // migrateOldDatesForUser(currentUser);
 
     // 4) დახატე
     renderUserInfo();
