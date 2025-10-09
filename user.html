@@ -231,6 +231,36 @@ a.file-link { color:#282828; text-decoration:underline; }
   </div>
 </div>
 
+<script>
+function openPhotoLightboxService(serviceIndex, startIdx){
+  const urls = currentUser?.services?.[serviceIndex]?.photoUrls || [];
+  if (!urls.length) return;
+  window.__lightbox = { urls, idx: Math.max(0, Math.min(startIdx||0, urls.length-1)) };
+  const img = document.getElementById('lightboxImage');
+  img.src = window.__lightbox.urls[window.__lightbox.idx];
+  document.getElementById('photoLightbox').style.display='block';
+}
+
+function closeLightbox(){
+  document.getElementById('photoLightbox').style.display='none';
+  window.__lightbox = null;
+}
+
+function prevPhoto(){
+  if (!window.__lightbox) return;
+  const lb = window.__lightbox;
+  lb.idx = (lb.idx - 1 + lb.urls.length) % lb.urls.length;
+  document.getElementById('lightboxImage').src = lb.urls[lb.idx];
+}
+
+function nextPhoto(){
+  if (!window.__lightbox) return;
+  const lb = window.__lightbox;
+  lb.idx = (lb.idx + 1) % lb.urls.length;
+  document.getElementById('lightboxImage').src = lb.urls[lb.idx];
+}
+</script>
+
 <script src="/js/server-storage-bridge.js"></script>
 
 <script>
@@ -389,24 +419,28 @@ function renderServices() {
 // Საწყისი ლინკები — ვცდილობთ URL-ებს; თუ არაა, ძველ File-ებზე ვვარდებით
 let docLink = "";
 if (s.docUrl) {
-  docLink = `<a class="file-link" href="${s.docUrl}" target="_blank">View PDF</a>`;
+  docLink = `<a class="file-link" href="${s.docUrl}" target="_blank" rel="noopener noreferrer">PDF-ის ნახვა</a>`;
 } else if (s.doc instanceof File) {
   docLink = `<a class="file-link" href="${URL.createObjectURL(s.doc)}" target="_blank">${s.doc.name}</a>`;
 }
 
 let photosLinks = "";
 if (Array.isArray(s.photoUrls) && s.photoUrls.length) {
-  photosLinks = s.photoUrls.map((u, i) =>
-    `<a class="file-link" href="${u}" target="_blank">Photo ${i+1}</a>`
-  ).join("<br>");
+  photosLinks = s.photoUrls
+    .map((u, i) =>
+      `<a href="#" class="file-link" onclick="openPhotoLightboxService(${origIndex}, ${i}); return false;">Photo ${i+1}</a>`
+    )
+    .join("<br>");
 } else if (Array.isArray(s.photos) && s.photos.length) {
-  photosLinks = s.photos.map((p, i) =>
-    (p instanceof File)
-      ? `<a class="file-link" href="${URL.createObjectURL(p)}" target="_blank">Photo ${i+1}</a>`
-      : ""
-  ).join("<br>");
+  // ძველი, File-ებზე დაფუძნებული ჩანაწერები — ვხსნით პირდაპირ object URL-ით ახალ ტაბში
+  photosLinks = s.photos
+    .map((p, i) =>
+      (p instanceof File)
+        ? `<a class="file-link" href="${URL.createObjectURL(p)}" target="_blank" rel="noopener noreferrer">Photo ${i+1}</a>`
+        : ""
+    )
+    .join("<br>");
 }
-
 
     let actionHtml = "";
     if (!isViewer()) {
