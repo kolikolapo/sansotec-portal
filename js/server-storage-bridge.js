@@ -150,3 +150,19 @@ window.addEventListener('beforeunload', () => {
   // სტარტზე სერვერიდან წავიღოთ
   pullFromServer();
 })();
+
+// ADD: uploadFile — აგზავნის FormData-ს /upload-ზე და აბრუნებს publicUrl-ს
+async function uploadFile(file) {
+  const fd = new FormData();
+  fd.append('file', file, file.name || 'file');
+  const r = await fetch(`${WORKER_BASE}/upload`, { method: 'POST', body: fd });
+  if (!r.ok) throw new Error('upload failed');
+  const j = await r.json();
+  if (!j?.ok || !j?.publicUrl) throw new Error('bad upload response');
+  return j.publicUrl; // აი ეს URL შევინახოთ users-ში
+}
+
+// თუ გაქვს window.ServerStore ობიექტი:
+window.ServerStore = window.ServerStore || {};
+window.ServerStore.uploadFile = uploadFile;
+

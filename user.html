@@ -385,15 +385,28 @@ function renderServices() {
   items.sort((a,b)=> parseDDMMYYYY(b.s.date) - parseDDMMYYYY(a.s.date));
 
   items.forEach(({s, i:origIndex})=>{
-    const docLink = (s.doc && s.doc instanceof File) 
-      ? `<a class="file-link" href="${URL.createObjectURL(s.doc)}" target="_blank">${s.doc.name}</a>` 
-      : "";
 
-    const photosLinks = (s.photos && s.photos.length>0) 
-      ? s.photos.map((p,photoIdx)=> p instanceof File 
-          ? `<a href="#" class="file-link" onclick="openPhotoLightboxService(${origIndex},${photoIdx});return false;">Photo ${photoIdx+1}</a>` 
-          : "").join("<br>") 
-      : "";
+// Საწყისი ლინკები — ვცდილობთ URL-ებს; თუ არაა, ძველ File-ებზე ვვარდებით
+let docLink = "";
+if (s.docUrl) {
+  docLink = `<a class="file-link" href="${s.docUrl}" target="_blank">View PDF</a>`;
+} else if (s.doc instanceof File) {
+  docLink = `<a class="file-link" href="${URL.createObjectURL(s.doc)}" target="_blank">${s.doc.name}</a>`;
+}
+
+let photosLinks = "";
+if (Array.isArray(s.photoUrls) && s.photoUrls.length) {
+  photosLinks = s.photoUrls.map((u, i) =>
+    `<a class="file-link" href="${u}" target="_blank">Photo ${i+1}</a>`
+  ).join("<br>");
+} else if (Array.isArray(s.photos) && s.photos.length) {
+  photosLinks = s.photos.map((p, i) =>
+    (p instanceof File)
+      ? `<a class="file-link" href="${URL.createObjectURL(p)}" target="_blank">Photo ${i+1}</a>`
+      : ""
+  ).join("<br>");
+}
+
 
     let actionHtml = "";
     if (!isViewer()) {
@@ -436,34 +449,57 @@ function closeServiceForm(){ document.getElementById("serviceModal").style.displ
 
 async function saveService() {
   if (isViewer()) { alert("დაშვება მხოლოდ Admin/Technician როლებისთვის."); return; }
-  const date=document.getElementById("serviceDate").value;
-  const purpose=document.getElementById("servicePurposeSelect").value;
-  const doc=document.getElementById("serviceDoc").files[0];
-  const photos=Array.from(document.getElementById("servicePhotos").files);
-  const price=document.getElementById("servicePrice").value;
-  const technician=document.getElementById("serviceTechnician").value;
 
-  if(!date || !purpose || !price){ alert("ყველა სავალდებულო ველი შეავსეთ!"); return; }
+  const date = document.getElementById("serviceDate").value;
+  const purpose = document.getElementById("servicePurposeSelect").value;
+  const docFile = document.getElementById("serviceDoc").files[0];
+  const photoFiles = Array.from(document.getElementById("servicePhotos").files);
+  const price = document.getElementById("servicePrice").value;
+  const technician = document.getElementById("serviceTechnician").value;
 
-  if(editingIndex!==null){
-    let s=currentUser.services[editingIndex];
-    s.date=date; s.purpose=purpose; s.price=price; s.technician=technician;
-    if(doc) s.doc=doc;
-    if(photos.length>0) s.photos=photos;
-  } else {
-    currentUser.services.push({date,purpose,doc,photos,price,technician});
+  if (!date || !purpose || !price) { alert("ყველა სავალდებულო ველი შეავსეთ!"); return; }
+
+  // 1) თუ აიტვირთა ფაილები — ავაგზავნოთ /upload-ზე და ავიღოთ publicUrl-ები
+  let docUrl = "";
+  if (docFile && window.ServerStore?.uploadFile) {
+    docUrl = await ServerStore.uploadFile(docFile);
   }
 
+  let photoUrls = [];
+  if (photoFiles.length && window.ServerStore?.uploadFile) {
+    for (const pf of photoFiles) {
+      const u = await ServerStore.uploadFile(pf);
+      photoUrls.push(u);
+    }
+  }
+
+  // 2) შევინახოთ ჩანაწერი URL-ებით (არა File-ებით)
+  if (editingIndex !== null) {
+    const s = currentUser.services[editingIndex];
+    s.date = date;
+    s.purpose = purpose;
+    s.price = price;
+    s.technician = technician;
+    if (docUrl) s.docUrl = docUrl;
+    if (photoUrls.length) s.photoUrls = photoUrls; // სურვილის მიხედვით შეგიძლია დამატებაც
+  } else {
+    currentUser.services.push({
+      date, purpose, price, technician,
+      docUrl,           // PDF-ის URL
+      photoUrls         // ფოტოების URL-ები
+    });
+  }
+
+  // 3) users ჩავწეროთ და სერვერზეც ავახალოთ
   const idx = users.findIndex(u => u.id === currentUser.id);
-  if (idx !== -1) { users[idx] = currentUser; }
-    // users ჩავწერეთ localStorage-ში
+  if (idx !== -1) users[idx] = currentUser;
+
   localStorage.setItem("users", JSON.stringify(users));
-await syncUsersToServer();   // ← დაველოდოთ, რომ სერვერზე ჩაიწეროს
-renderServices();
-closeServiceForm();
+  await syncUsersToServer();
 
+  renderServices();
+  closeServiceForm();
 }
-
 
 async function deleteService(idx){
 
