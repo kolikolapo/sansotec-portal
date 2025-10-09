@@ -416,10 +416,12 @@ function renderServices() {
 
   items.forEach(({s, i:origIndex})=>{
 
-// Საწყისი ლინკები — ვცდილობთ URL-ებს; თუ არაა, ძველ File-ებზე ვვარდებით
+// ==== LINKS (ახალი ვარიანტი „წაშლა“-ს ღილაკებით) ====
 let docLink = "";
 if (s.docUrl) {
-  docLink = `<a class="file-link" href="${s.docUrl}" target="_blank" rel="noopener noreferrer">PDF-ის ნახვა</a>`;
+  const key = extractKeyFromWorkerUrl(s.docUrl);
+  const delBtn = key ? ` <button class="btn-small btn-delete" onclick="deleteDocFile(${origIndex})">წაშლა</button>` : "";
+  docLink = `<a class="file-link" href="${s.docUrl}" target="_blank" rel="noopener noreferrer">PDF-ის ნახვა</a>${delBtn}`;
 } else if (s.doc instanceof File) {
   docLink = `<a class="file-link" href="${URL.createObjectURL(s.doc)}" target="_blank">${s.doc.name}</a>`;
 }
@@ -427,12 +429,13 @@ if (s.docUrl) {
 let photosLinks = "";
 if (Array.isArray(s.photoUrls) && s.photoUrls.length) {
   photosLinks = s.photoUrls
-    .map((u, i) =>
-      `<a href="#" class="file-link" onclick="openPhotoLightboxService(${origIndex}, ${i}); return false;">Photo ${i+1}</a>`
-    )
+    .map((u, i) => {
+      const key = extractKeyFromWorkerUrl(u);
+      const delBtn = key ? ` <button class="btn-small btn-delete" onclick="deletePhotoFile(${origIndex}, ${i})">წაშლა</button>` : "";
+      return `<a href="#" class="file-link" onclick="openPhotoLightboxService(${origIndex}, ${i}); return false;">Photo ${i+1}</a>${delBtn}`;
+    })
     .join("<br>");
 } else if (Array.isArray(s.photos) && s.photos.length) {
-  // ძველი, File-ებზე დაფუძნებული ჩანაწერები — ვხსნით პირდაპირ object URL-ით ახალ ტაბში
   photosLinks = s.photos
     .map((p, i) =>
       (p instanceof File)
@@ -441,6 +444,7 @@ if (Array.isArray(s.photoUrls) && s.photoUrls.length) {
     )
     .join("<br>");
 }
+// ==== END LINKS ====
 
     let actionHtml = "";
     if (!isViewer()) {
@@ -599,6 +603,73 @@ async function deleteService(idx){
   }
 }
 
+async function deleteDocFile(serviceIndex){
+  const s = currentUser.services[serviceIndex];
+  if (!s?.docUrl) return;
+  const key = extractKeyFromWorkerUrl(s.docUrl);
+  if (!confirm("დარწმუნებული ხარ? PDF წაიშლება სერვერიდანაც.")) return;
+
+  try {
+    if (key) {
+      // თუ ServerStore.deleteFiles გაქვს, გამოიყენე; თუ არა — პირდაპირ worker-სთან fetch:
+      if (window.ServerStore?.deleteFiles) {
+        await ServerStore.deleteFiles([key]);
+      } else {
+        await fetch('https://restless-lab-c6ef.n-gogolashvili.workers.dev/delete-file', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key })
+        });
+      }
+    }
+    delete s.docUrl;
+
+    const idx = users.findIndex(u => u.id === currentUser.id);
+    if (idx !== -1) users[idx] = currentUser;
+    localStorage.setItem('users', JSON.stringify(users));
+    await syncUsersToServer();
+
+    renderServices();
+  } catch(e){
+    alert("წაშლა ვერ მოხერხდა.");
+    console.warn(e);
+  }
+}
+
+async function deletePhotoFile(serviceIndex, photoIdx){
+  const s = currentUser.services[serviceIndex];
+  if (!Array.isArray(s?.photoUrls) || !s.photoUrls[photoIdx]) return;
+  const url = s.photoUrls[photoIdx];
+  const key = extractKeyFromWorkerUrl(url);
+  if (!confirm("დარწმუნებული ხარ? ფოტო წაიშლება სერვერიდანაც.")) return;
+
+  try {
+    if (key) {
+      if (window.ServerStore?.deleteFiles) {
+        await ServerStore.deleteFiles([key]);
+      } else {
+        await fetch('https://restless-lab-c6ef.n-gogolashvili.workers.dev/delete-file', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key })
+        });
+      }
+    }
+    s.photoUrls.splice(photoIdx, 1);
+
+    const idx = users.findIndex(u => u.id === currentUser.id);
+    if (idx !== -1) users[idx] = currentUser;
+    localStorage.setItem('users', JSON.stringify(users));
+    await syncUsersToServer();
+
+    renderServices();
+  } catch(e){
+    alert("წაშლა ვერ მოხერხდა.");
+    console.warn(e);
+  }
+}
+
+
 function editService(idx){
   if (isViewer()) { alert("დაშვება მხოლოდ Admin/Technician როლებისთვის."); return; }
   const s=currentUser.services[idx];
@@ -609,6 +680,15 @@ function editService(idx){
   document.getElementById("servicePrice").value=s.price;
   document.getElementById("serviceTechnician").value=s.technician || "ნიკო";
   document.getElementById("serviceModal").style.display="block";
+}
+
+// worker-ის /f/<key> ბმულიდან key-ის ამოღება (სუფთა JS, script ტეგები არ სჭირდება)
+function extractKeyFromWorkerUrl(urlStr){
+  try {
+    const u = new URL(urlStr);
+    if (u.pathname.startsWith('/f/')) return decodeURIComponent(u.pathname.slice(3));
+    return null;
+  } catch { return null; }
 }
 
 /* ===== Filters (kept) ===== */

@@ -217,6 +217,20 @@ async function uploadMany(files){
 window.ServerStore = window.ServerStore || {};
 window.ServerStore.uploadFile = uploadFile;
 window.ServerStore.uploadMany = uploadMany;
+// === DELETE FILES (R2-დან) ===
+// იღებს ერთ ან რამდენიმე key-ს (არა URL). მაგალითად: "2025-10-10/abcd-file.webp"
+async function deleteFiles(keys){
+  const r = await fetch('https://restless-lab-c6ef.n-gogolashvili.workers.dev/delete-file', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ keys })
+  });
+  const j = await r.json().catch(()=>null);
+  if(!r.ok || !j?.ok) throw new Error('delete failed');
+  return j;
+}
+window.ServerStore.deleteFiles = deleteFiles;
+
 // --- expose getUsers/saveUsers so user.html can force-sync ---
 window.ServerStore.getUsers = async function () {
   const r = await fetch(`${WORKER_UPLOAD_BASE}/get-users`, { method: 'GET' });
