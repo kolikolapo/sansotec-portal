@@ -217,7 +217,7 @@ a.file-link { color:#282828; text-decoration:underline; }
       <option>ვახო</option>
       <option>ნიკო/ვახო</option>
     </select>
-    <button type="button" onclick="saveService()">შენახვა</button>
+    <button type="button" id="saveServiceBtn" onclick="saveService()">შენახვა</button>
   </div>
 </div>
 
@@ -450,55 +450,102 @@ function closeServiceForm(){ document.getElementById("serviceModal").style.displ
 async function saveService() {
   if (isViewer()) { alert("დაშვება მხოლოდ Admin/Technician როლებისთვის."); return; }
 
-  const date = document.getElementById("serviceDate").value;
-  const purpose = document.getElementById("servicePurposeSelect").value;
-  const docFile = document.getElementById("serviceDoc").files[0];
-  const photoFiles = Array.from(document.getElementById("servicePhotos").files);
-  const price = document.getElementById("servicePrice").value;
-  const technician = document.getElementById("serviceTechnician").value;
+  const btn = document.getElementById('saveServiceBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'შენახვა...'; }
 
-  if (!date || !purpose || !price) { alert("ყველა სავალდებულო ველი შეავსეთ!"); return; }
+  try {
+    const date       = document.getElementById("serviceDate").value;
+    const purpose    = document.getElementById("servicePurposeSelect").value;
+    const docFile    = document.getElementById("serviceDoc").files[0];
+    const photoFiles = Array.from(document.getElementById("servicePhotos").files);
+    const price      = document.getElementById("servicePrice").value;
+    const technician = document.getElementById("serviceTechnician").value;
 
-  // 1) თუ აიტვირთა ფაილები — ავაგზავნოთ /upload-ზე და ავიღოთ publicUrl-ები
-  let docUrl = "";
-  if (docFile && window.ServerStore?.uploadFile) {
-    docUrl = await ServerStore.uploadFile(docFile);
-  }
-
-  let photoUrls = [];
-  if (photoFiles.length && window.ServerStore?.uploadFile) {
-    for (const pf of photoFiles) {
-      const u = await ServerStore.uploadFile(pf);
-      photoUrls.push(u);
+    if (!date || !purpose || !price) {
+      alert("ყველა სავალდებულო ველი შეავსეთ!");
+      return;
     }
+
+    // ---- 1) ფაილების ატვირთვა (უსაფრთხო, try/catch, არ ბლოკავს შენახვას) ----
+    let docUrl = "";
+    if (docFile) {
+      try {
+        if (!window.ServerStore?.uploadFile) throw new Error('uploadFile undef');
+        docUrl = await ServerStore.uploadFile(docFile);
+      } catch (e) {
+        console.warn('PDF upload failed:', e);
+        alert("გაითვალისწინე: PDF ვერ აიტვირთა. ჩანაწერი მაინც შეინახება ფაილის გარეშე.");
+      }
+    }
+
+    let photoUrls = [];
+    if (photoFiles.length) {
+      if (!window.ServerStore?.uploadFile) {
+        console.warn('uploadFile undefined, skipping photos');
+      } else {
+        for (const pf of photoFiles) {
+          try {
+            const u = await ServerStore.uploadFile(pf);
+            if (u) photoUrls.push(u);
+          } catch (e) {
+            console.warn('Photo upload failed for', pf?.name, e);
+            // ვაგრძელებთ დანარჩენების ატვირთვას
+          }
+        }
+        if (photoFiles.length && photoUrls.length === 0) {
+          alert("ფოტოები ვერ აიტვირთა. ჩანაწერი მაინც ინახება.");
+        }
+      }
+    }
+
+    // ---- 2) ჩავწეროთ ჩანაწერი (URL-ებით), File ობიექტების გარეშე ----
+    if (editingIndex !== null) {
+      const s = currentUser.services[editingIndex];
+      s.date = date;
+      s.purpose = purpose;
+      s.price = price;
+      s.technician = technician;
+
+      // მხოლოდ მაშინ გადავაწეროთ, თუ რეალურად გვაქვს url-ები
+      if (docUrl) s.docUrl = docUrl;
+      if (photoUrls.length) s.photoUrls = photoUrls;
+      // ძველი File ველები აღარ ვიყენოთ
+      delete s.doc;
+      delete s.photos;
+    } else {
+      currentUser.services.push({
+        date, purpose, price, technician,
+        docUrl: docUrl || "",          // შეიძლება ცარიელი დარჩეს, თუ ატვირთვა ვერ მოხერხდა
+        photoUrls: photoUrls || []     // ან ცარიელი მასივი
+      });
+    }
+
+    // ---- 3) users -> localStorage -> სერვერზე push ----
+    const idx = users.findIndex(u => u.id === currentUser.id);
+    if (idx !== -1) users[idx] = currentUser;
+
+    localStorage.setItem("users", JSON.stringify(users));
+    await syncUsersToServer();   // დაველოდოთ სერვერზე ჩაწერას
+
+    // სურვილისამებრ: ჩუმად განვაახლოთ users სერვერიდან, რომ incognito-სთან იყო თანხვედრა
+    if (window.ServerStore?.getUsers) {
+      try {
+        const fresh = await ServerStore.getUsers();
+        if (Array.isArray(fresh) && fresh.length) {
+          localStorage.setItem('users', JSON.stringify(fresh));
+          // ახლიდან წამოვიკითხოთ currentUser ახალ users-დან
+          const uid = currentUser.id;
+          users = fresh;
+          currentUser = users.find(u => u.id === uid) || currentUser;
+        }
+      } catch (e) { /* ჩუმად */ }
+    }
+
+    renderServices();
+    closeServiceForm();
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'შენახვა'; }
   }
-
-  // 2) შევინახოთ ჩანაწერი URL-ებით (არა File-ებით)
-  if (editingIndex !== null) {
-    const s = currentUser.services[editingIndex];
-    s.date = date;
-    s.purpose = purpose;
-    s.price = price;
-    s.technician = technician;
-    if (docUrl) s.docUrl = docUrl;
-    if (photoUrls.length) s.photoUrls = photoUrls; // სურვილის მიხედვით შეგიძლია დამატებაც
-  } else {
-    currentUser.services.push({
-      date, purpose, price, technician,
-      docUrl,           // PDF-ის URL
-      photoUrls         // ფოტოების URL-ები
-    });
-  }
-
-  // 3) users ჩავწეროთ და სერვერზეც ავახალოთ
-  const idx = users.findIndex(u => u.id === currentUser.id);
-  if (idx !== -1) users[idx] = currentUser;
-
-  localStorage.setItem("users", JSON.stringify(users));
-  await syncUsersToServer();
-
-  renderServices();
-  closeServiceForm();
 }
 
 async function deleteService(idx){
