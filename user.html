@@ -233,6 +233,24 @@ a.file-link { color:#282828; text-decoration:underline; }
 
 <script src="/js/server-storage-bridge.js"></script>
 
+<script>
+  // თუ localStorage ცარიელია, ერთი ჯერზე ჩამოიტანე სერვერიდან users და ჩაწერე
+  window.bootstrapFromServerIfEmpty = async function () {
+    try {
+      const cur = JSON.parse(localStorage.getItem('users') || '[]');
+      if (!Array.isArray(cur) || cur.length === 0) {
+        const r = await fetch('https://restless-lab-c6ef.n-gogolashvili.workers.dev/get-users');
+        const j = await r.json();
+        if (Array.isArray(j?.users) && j.users.length > 0) {
+          localStorage.setItem('users', JSON.stringify(j.users));
+        }
+      }
+    } catch (e) {
+      console.warn('bootstrapFromServerIfEmpty (user.html):', e);
+    }
+  };
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
 /* ===== Guard (unchanged) ===== */
@@ -251,10 +269,20 @@ function isTech(){ return getRole()==="Technician"; }
 function isViewer(){ return getRole()==="Viewer"; }
 
 /* ===== Users + Selected (kept) ===== */
-let users = JSON.parse(localStorage.getItem("users")) || [];
-let selectedUserId = localStorage.getItem("selectedUser");
-let currentUser = users.find(u=>u.id===selectedUserId);
+let users = [];
+let selectedUserId = null;
+let currentUser = null;
 let editingIndex = null;
+
+// --- NEW: სერვერზე users-ის დამონტაჟება (უსაფრთხო, ჩუმად) ---
+async function syncUsersToServer() {
+  try {
+    const cur = JSON.parse(localStorage.getItem('users') || '[]');
+    if (Array.isArray(cur) && window.ServerStore && ServerStore.saveUsers) {
+      await ServerStore.saveUsers(cur);
+    }
+  } catch (e) { /* silent */ }
+}
 
 /* ===== Dates migration (kept) ===== */
 function toDisplayDate(str){
@@ -275,10 +303,14 @@ function migrateOldDatesForUser(user){
   });
   if (changed) {
     const idx = users.findIndex(u => u.id === user.id);
-    if (idx !== -1) { users[idx] = user; localStorage.setItem("users", JSON.stringify(users)); }
+    if (idx !== -1) {
+  users[idx] = user;
+  localStorage.setItem("users", JSON.stringify(users));
+  syncUsersToServer(); // NEW
+}
+
   }
 }
-migrateOldDatesForUser(currentUser);
 
 function parseDDMMYYYY(str){
   const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(str || "");
@@ -410,11 +442,17 @@ function saveService() {
 
   const idx = users.findIndex(u => u.id === currentUser.id);
   if (idx !== -1) { users[idx] = currentUser; }
+    // users ჩავწერეთ localStorage-ში
   localStorage.setItem("users", JSON.stringify(users));
 
+  // NEW: სერვერზე პუში
+  syncUsersToServer();
+
+  // რენდერი და დახურვა
   renderServices();
   closeServiceForm();
 }
+
 
 function deleteService(idx){
   if (isViewer()) { alert("დაშვება მხოლოდ Admin/Technician როლებისთვის."); return; }
@@ -422,8 +460,12 @@ function deleteService(idx){
     currentUser.services.splice(idx,1);
     const idxU = users.findIndex(u => u.id === currentUser.id);
     if (idxU !== -1) { users[idxU] = currentUser; }
-    localStorage.setItem("users",JSON.stringify(users));
+        localStorage.setItem("users", JSON.stringify(users));
+    // NEW: სერვერზე პუში
+    syncUsersToServer();
+    // რენდერი
     renderServices();
+
   }
 }
 
@@ -491,14 +533,39 @@ updateSidebarByRole();
 /* ===== Init (kept) ===== */
 flatpickr("#serviceDate", { dateFormat: "d.m.Y", allowInput: true, clickOpens: true });
 
-if(!currentUser) {
-  // თუ selectedUser არ არის, დავაბრუნოთ მთავარზე
-  window.location.href = "main.html";
-} else {
-  if(!currentUser.services) currentUser.services=[];
-  renderUserInfo();
-  renderServices();
-}
+// --- NEW: პირველად გახსნისას ჯერ სერვერიდან ჩამოტანა, მერე რენდერი ---
+(async function initUserPage(){
+  try {
+    // 1) თუ localStorage ცარიელია — ჩამოიტანს სერვერიდან
+    if (typeof window.bootstrapFromServerIfEmpty === 'function') {
+      await window.bootstrapFromServerIfEmpty();
+    }
+
+    // 2) შემდეგ წავიკითხოთ users და ავირჩიოთ მიმდინარე
+    users = JSON.parse(localStorage.getItem('users') || '[]');
+    selectedUserId = localStorage.getItem('selectedUser');
+    currentUser = users.find(u => u.id === selectedUserId) || null;
+
+    if (!currentUser) {
+      window.location.href = "main.html";
+      return;
+    }
+
+    // 3) უსაფრთხოება
+    if (!currentUser.services) currentUser.services = [];
+
+    // (არსებობს შენთან) ძველი თარიღების მიგრაცია, თუ გჭირდება:
+    // migrateOldDatesForUser(currentUser);
+
+    // 4) დახატე
+    renderUserInfo();
+    renderServices();
+  } catch(e) {
+    console.warn('initUserPage error:', e);
+    if (!currentUser) window.location.href = "main.html";
+  }
+})();
+
 </script>
 
 
