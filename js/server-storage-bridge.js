@@ -217,6 +217,24 @@ async function uploadMany(files){
 window.ServerStore = window.ServerStore || {};
 window.ServerStore.uploadFile = uploadFile;
 window.ServerStore.uploadMany = uploadMany;
+// --- expose getUsers/saveUsers so user.html can force-sync ---
+window.ServerStore.getUsers = async function () {
+  const r = await fetch(`${WORKER_UPLOAD_BASE}/get-users`, { method: 'GET' });
+  if (!r.ok) return [];
+  const j = await r.json().catch(() => ({}));
+  return Array.isArray(j?.users) ? j.users : [];
+};
+
+window.ServerStore.saveUsers = async function (usersArray) {
+  // მოელოდება: { users: [...] }
+  const r = await fetch(`${WORKER_UPLOAD_BASE}/save-users`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ users: Array.isArray(usersArray) ? usersArray : [] })
+  });
+  return r.ok;
+};
+
 // === END: SIMPLE IMAGE/PDF UPLOAD (with image->WEBP compress) ===
 
 

@@ -500,59 +500,61 @@ async function saveService() {
       return;
     }
 
-    // ---- 1) ფაილების ატვირთვა (უსაფრთხო, try/catch, არ ბლოკავს შენახვას) ----
-    let docUrl = "";
-    if (docFile) {
+   // ---- 1) ფაილების ატვირთვა (უსაფრთხო) ----
+let docUrl = "";
+let photoUrls = [];
+const isHttpUrl = (u) => typeof u === "string" && /^https?:\/\//i.test(u);
+
+if (docFile) {
+  try {
+    if (!window.ServerStore?.uploadFile) throw new Error('uploadFile undef');
+    const u = await ServerStore.uploadFile(docFile);
+    if (isHttpUrl(u)) docUrl = u; else throw new Error('bad url');
+  } catch (e) {
+    console.warn('PDF upload failed:', e);
+    // არაფერს ვშლით — ადგილობრივ File-ად დავტოვოთ
+  }
+}
+
+if (photoFiles.length) {
+  if (!window.ServerStore?.uploadFile) {
+    console.warn('uploadFile undefined, skipping photos');
+  } else {
+    for (const pf of photoFiles) {
       try {
-        if (!window.ServerStore?.uploadFile) throw new Error('uploadFile undef');
-        docUrl = await ServerStore.uploadFile(docFile);
+        const u = await ServerStore.uploadFile(pf);
+        if (isHttpUrl(u)) photoUrls.push(u);
       } catch (e) {
-        console.warn('PDF upload failed:', e);
-        alert("გაითვალისწინე: PDF ვერ აიტვირთა. ჩანაწერი მაინც შეინახება ფაილის გარეშე.");
+        console.warn('Photo upload failed for', pf?.name, e);
       }
     }
+  }
+}
 
-    let photoUrls = [];
-    if (photoFiles.length) {
-      if (!window.ServerStore?.uploadFile) {
-        console.warn('uploadFile undefined, skipping photos');
-      } else {
-        for (const pf of photoFiles) {
-          try {
-            const u = await ServerStore.uploadFile(pf);
-            if (u) photoUrls.push(u);
-          } catch (e) {
-            console.warn('Photo upload failed for', pf?.name, e);
-            // ვაგრძელებთ დანარჩენების ატვირთვას
-          }
-        }
-        if (photoFiles.length && photoUrls.length === 0) {
-          alert("ფოტოები ვერ აიტვირთა. ჩანაწერი მაინც ინახება.");
-        }
-      }
-    }
+// ---- 2) ჩავწეროთ ჩანაწერი (URL თუ არის → ვწერთ; თუ არა → File დავტოვოთ, რომ ამ სესიაში იმუშაოს) ----
+if (editingIndex !== null) {
+  const s = currentUser.services[editingIndex];
+  s.date = date;
+  s.purpose = purpose;
+  s.price = price;
+  s.technician = technician;
 
-    // ---- 2) ჩავწეროთ ჩანაწერი (URL-ებით), File ობიექტების გარეშე ----
-    if (editingIndex !== null) {
-      const s = currentUser.services[editingIndex];
-      s.date = date;
-      s.purpose = purpose;
-      s.price = price;
-      s.technician = technician;
+  if (docUrl) { s.docUrl = docUrl; delete s.doc; }
+  else if (docFile) { s.doc = docFile; }
 
-      // მხოლოდ მაშინ გადავაწეროთ, თუ რეალურად გვაქვს url-ები
-      if (docUrl) s.docUrl = docUrl;
-      if (photoUrls.length) s.photoUrls = photoUrls;
-      // ძველი File ველები აღარ ვიყენოთ
-      delete s.doc;
-      delete s.photos;
-    } else {
-      currentUser.services.push({
-        date, purpose, price, technician,
-        docUrl: docUrl || "",          // შეიძლება ცარიელი დარჩეს, თუ ატვირთვა ვერ მოხერხდა
-        photoUrls: photoUrls || []     // ან ცარიელი მასივი
-      });
-    }
+  if (photoUrls.length) { s.photoUrls = photoUrls; delete s.photos; }
+  else if (photoFiles.length) { s.photos = photoFiles; }
+
+} else {
+  const newService = { date, purpose, price, technician };
+  if (docUrl) newService.docUrl = docUrl;
+  else if (docFile) newService.doc = docFile;
+
+  if (photoUrls.length) newService.photoUrls = photoUrls;
+  else if (photoFiles.length) newService.photos = photoFiles;
+
+  currentUser.services.push(newService);
+}
 
     // ---- 3) users -> localStorage -> სერვერზე push ----
     const idx = users.findIndex(u => u.id === currentUser.id);
