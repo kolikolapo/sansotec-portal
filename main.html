@@ -188,6 +188,29 @@ tr:hover { background:#f7f7f7; cursor:pointer;}
 <script src="/js/server-storage-bridge.js"></script>
 
 <script>
+  // თუ localStorage ცარიელია, გახსნისას ერთი ჯერზე ჩამოიტანე სერვერიდან და მერე დახატე ცხრილი
+  (async function bootstrapFromServerIfEmpty(){
+    try {
+      const cur = JSON.parse(localStorage.getItem('users') || '[]');
+      if (!Array.isArray(cur) || cur.length === 0) {
+        const r = await fetch('https://restless-lab-c6ef.n-gogolashvili.workers.dev/get-users');
+        const j = await r.json();
+        if (Array.isArray(j?.users) && j.users.length > 0) {
+          localStorage.setItem('users', JSON.stringify(j.users));
+          // თუ უკვე გაქვს აღწერილი renderUsers(), ახლა გამოიძახე რომ ცხრილი დაიხატოს
+          if (typeof renderUsers === 'function') {
+            renderUsers();
+          }
+        }
+      }
+    } catch(e) {
+      console.warn('bootstrapFromServerIfEmpty:', e);
+    }
+  })();
+</script>
+
+
+<script>
 /* ===== Guard ===== */
 (function(){
   const cu = JSON.parse(localStorage.getItem("currentUser")||"null");
