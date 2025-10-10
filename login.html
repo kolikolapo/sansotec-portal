@@ -119,13 +119,31 @@ footer{
   display:flex; flex-direction:column; align-items:flex-start; gap:8px;
   min-width:180px;
 }
-.footer-logo{ display:flex; align-items:center; justify-content:flex-start; padding-left:14px; }
-.footer-logo img{ width:120px; height:auto; }
-.footer-title{ font-weight:700; font-size:13px; letter-spacing:.4px; opacity:.95; text-transform:uppercase; margin-top:4px; }
-.footer-links a{ color:#fff; text-decoration:none; font-size:14px; opacity:.95; display:block; }
+.footer-logo{
+  display:flex; align-items:center; justify-content:flex-start;
+  padding-left:14px;
+}
+.footer-logo img{
+  width:120px; height:auto;
+}
+.footer-title{
+  font-weight:700; font-size:13px; letter-spacing:.4px; opacity:.95;
+  text-transform:uppercase;
+  margin-top:4px;
+}
+.footer-links a{
+  color:#fff; text-decoration:none; font-size:14px; opacity:.95;
+  display:block;
+}
 .footer-links a:hover{ text-decoration:underline; }
-.footer-phones span{ font-size:14px; display:block; }
-.footer-social{ display:flex; flex-direction:column; gap:10px; }
+.footer-phones span{
+  font-size:14px; display:block;
+}
+
+/* Social buttons */
+.footer-social{
+  display:flex; flex-direction:column; gap:10px;
+}
 .footer-social .btn-social{
   display:inline-flex; align-items:center; gap:10px;
   background:rgba(255,255,255,0.1);
@@ -134,13 +152,16 @@ footer{
   transition:.15s;
 }
 .footer-social .btn-social:hover{ background:rgba(255,255,255,0.22); }
-.footer-social .btn-social img{ width:22px; height:22px; object-fit:contain; display:block; background:none; border:none; box-shadow:none; outline:none; }
+.footer-social .btn-social img{
+  width:22px; height:22px; object-fit:contain; display:block;
+  background:none; border:none; box-shadow:none; outline:none;
+}
 
 @media (max-width:640px){
   .footer-inner{ justify-content:flex-start; gap:22px; }
   .footer-col{ min-width:160px; }
+  .card-head img{ width:64px; height:64px; }
 }
-
 </style>
 </head>
 <body>
@@ -154,33 +175,32 @@ footer{
     </div>
 
     <div class="card-body">
-  <form id="loginForm" autocomplete="on">
-    <label for="username">მომხმარებელი</label>
-    <div class="input-wrap">
-      <input id="username" name="username" type="text" placeholder="შეიყვანე მომხმარებელი" autocomplete="username" autofocus>
-    </div>
+      <label for="username">მომხმარებელი</label>
+      <div class="input-wrap">
+        <input id="username" type="text" placeholder="შეიყვანე მომხმარებელი" autocomplete="username" autofocus>
+      </div>
 
-    <label for="password">პაროლი</label>
-    <div class="input-wrap">
-      <input id="password" name="password" type="password" placeholder="შეიყვანე პაროლი" autocomplete="current-password">
-      <button class="toggle-eye" type="button" onclick="togglePassword(this)">აჩვენე</button>
-    </div>
+      <label for="password">პაროლი</label>
+      <div class="input-wrap">
+        <input id="password" type="password" placeholder="შეიყვანე პაროლი" autocomplete="current-password">
+        <button class="toggle-eye" type="button" onclick="togglePassword()">აჩვენე</button>
+      </div>
 
-    <div class="row">
-      <label class="remember">
-        <input id="remember" type="checkbox"> დამიმახსოვრე
-      </label>
-      <a href="#" onclick="alert(' გთხოვ, დაუკავშირდი ადმინისტრატორს. '); return false;">დამავიწყდა პაროლი</a>
-    </div>
+      <div class="row">
+        <label class="remember">
+          <input id="remember" type="checkbox"> დამიმახსოვრე
+        </label>
+        <a href="#" onclick="alert(' გთხოვ, დაუკავშირდი ადმინისტრატორს. '); return false;">დამავიწყდა პაროლი</a>
+      </div>
 
-    <button class="login" type="submit">შესვლა</button>
-    <!-- აქ გამოვაჩენთ შეცდომას ServerAuth.login-ის შემთხვევაში -->
-    <div id="loginError" class="error" aria-live="polite"></div>
-  </form>
+      <button class="login" onclick="doLogin()">შესვლა</button>
+      <div id="error" class="error">მომხმარებელი ან პაროლი არასწორია.</div>
+
+      <div class="note">ტესტური მომხმარებლები ავტომატურადაა გაწერილი.</div>
+    </div>
+  </div>
 </div>
 
-
-<!-- ===== Footer (ONLY) ===== -->
 <footer>
   <div class="footer-inner">
     <!-- Column 1: Logo -->
@@ -222,6 +242,7 @@ footer{
     </div>
   </div>
 </footer>
+
 
 <script src="/js/server-storage-bridge.js"></script>
 
