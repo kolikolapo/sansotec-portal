@@ -214,6 +214,41 @@ async function uploadMany(files){
 }
 
 // გლობალზე დავაგდოთ
+// === Auth client (login/me/logout) ===
+const API_BASE = "https://restless-lab-c6ef.n-gogolashvili.workers.dev";
+
+window.ServerAuth = {
+  async login(username, password) {
+    const r = await fetch(`${API_BASE}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",            // ქუქი მოვიდეს/წაიკითხოს
+      body: JSON.stringify({ username, password })
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j?.error || `Login failed: ${r.status}`);
+    }
+    return r.json(); // { ok:true, user:{ username, role } }
+  },
+
+  async me() {
+    const r = await fetch(`${API_BASE}/me`, {
+      credentials: "include"             // ქუქი გავუგზავნოთ
+    });
+    if (!r.ok) return { authenticated: false };
+    return r.json(); // { authenticated, user? }
+  },
+
+  async logout() {
+    const r = await fetch(`${API_BASE}/logout`, {
+      method: "POST",
+      credentials: "include"
+    });
+    return r.ok;
+  }
+};
+
 window.ServerStore = window.ServerStore || {};
 window.ServerStore.uploadFile = uploadFile;
 window.ServerStore.uploadMany = uploadMany;

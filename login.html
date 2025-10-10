@@ -175,31 +175,31 @@ footer{
     </div>
 
     <div class="card-body">
-      <label for="username">მომხმარებელი</label>
-      <div class="input-wrap">
-        <input id="username" type="text" placeholder="შეიყვანე მომხმარებელი" autocomplete="username" autofocus>
-      </div>
-
-      <label for="password">პაროლი</label>
-      <div class="input-wrap">
-        <input id="password" type="password" placeholder="შეიყვანე პაროლი" autocomplete="current-password">
-        <button class="toggle-eye" type="button" onclick="togglePassword()">აჩვენე</button>
-      </div>
-
-      <div class="row">
-        <label class="remember">
-          <input id="remember" type="checkbox"> დამიმახსოვრე
-        </label>
-        <a href="#" onclick="alert(' გთხოვ, დაუკავშირდი ადმინისტრატორს. '); return false;">დამავიწყდა პაროლი</a>
-      </div>
-
-      <button class="login" onclick="doLogin()">შესვლა</button>
-      <div id="error" class="error">მომხმარებელი ან პაროლი არასწორია.</div>
-
-      <div class="note">ტესტური მომხმარებლები ავტომატურადაა გაწერილი.</div>
+  <form id="loginForm" autocomplete="on">
+    <label for="username">მომხმარებელი</label>
+    <div class="input-wrap">
+      <input id="username" name="username" type="text" placeholder="შეიყვანე მომხმარებელი" autocomplete="username" autofocus>
     </div>
-  </div>
+
+    <label for="password">პაროლი</label>
+    <div class="input-wrap">
+      <input id="password" name="password" type="password" placeholder="შეიყვანე პაროლი" autocomplete="current-password">
+      <button class="toggle-eye" type="button" onclick="togglePassword(this)">აჩვენე</button>
+    </div>
+
+    <div class="row">
+      <label class="remember">
+        <input id="remember" type="checkbox"> დამიმახსოვრე
+      </label>
+      <a href="#" onclick="alert(' გთხოვ, დაუკავშირდი ადმინისტრატორს. '); return false;">დამავიწყდა პაროლი</a>
+    </div>
+
+    <button class="login" type="submit">შესვლა</button>
+    <!-- აქ გამოვაჩენთ შეცდომას ServerAuth.login-ის შემთხვევაში -->
+    <div id="loginError" class="error" aria-live="polite"></div>
+  </form>
 </div>
+
 
 <footer>
   <div class="footer-inner">
@@ -269,42 +269,69 @@ footer{
   }
 })();
 
-function togglePassword(){
+function togglePassword(btn){
   const ip = document.getElementById("password");
-  const btn = event.currentTarget;
-  if(ip.type === "password"){ ip.type = "text"; btn.textContent = "დამალე"; }
-  else { ip.type = "password"; btn.textContent = "აჩვენე"; }
-}
-document.addEventListener("keydown", (e)=>{ if(e.key === "Enter") doLogin(); });
-
-function doLogin(){
-  const u = document.getElementById("username").value.trim();
-  const p = document.getElementById("password").value;
-  const remember = document.getElementById("remember").checked;
-  const errorEl = document.getElementById("error");
-
-  const users = JSON.parse(localStorage.getItem("appUsers")||"[]");
-  const found = users.find(x => x.username === u && x.password === p);
-
-  if(!found){ errorEl.style.display = "block"; return; }
-
-  const currentUser = {
-    username: found.username,
-    role: found.role,
-    fullName: found.fullName || found.username,
-    loginAt: new Date().toISOString(),
-    remember
-  };
-  localStorage.setItem("currentUser", JSON.stringify(currentUser));
-
-  // ✅ Login-ის ლოგირება
-  const logs = JSON.parse(localStorage.getItem("appLogs")||"[]");
-  logs.unshift({ user: found.username, action:"Login", time:new Date().toLocaleString("ka-GE") });
-  localStorage.setItem("appLogs", JSON.stringify(logs));
-
-  window.location.href = "main.html";
+  if (ip.type === "password") {
+    ip.type = "text";
+    btn.textContent = "დამალე";
+  } else {
+    ip.type = "password";
+    btn.textContent = "აჩვენე";
+  }
 }
 </script>
+
+<script>
+  // ვეძებთ ფორმას და ველებს — იდიალურში ასე დაარქვი:
+  // <form id="loginForm">  <input name="username">  <input name="password" type="password">  </form>
+  const form = document.getElementById('loginForm') || document.querySelector('form');
+  const userEl = (form && (form.querySelector('input[name="username"]') || form.querySelector('#username')));
+  const passEl = (form && (form.querySelector('input[name="password"]') || form.querySelector('#password')));
+  // სურვილის მიხედვით ჩაამატე <div id="loginError"></div> ფორმასთან — აქ ვაჩვენებთ შეცდომას.
+  const errBox = document.getElementById('loginError');
+
+  async function showMeAndRedirect() {
+    const me = await ServerAuth.me(); // ქუქით შეგვმოწმებს
+    if (me?.authenticated) {
+      // უკვე შიგნით ვართ — გადაამისამართე მთავარ გვერდზე (ან სადაც გინდა)
+      window.location.href = 'main.html';
+    }
+  }
+
+  // თუ უკვე ავტორიზებულია, პირდაპირ გადაამისამართე
+  showMeAndRedirect();
+
+  if (form && userEl && passEl) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errBox && (errBox.textContent = '');
+      const btn = form.querySelector('button[type="submit"]');
+      btn && (btn.disabled = true);
+
+      try {
+        const username = (userEl.value || '').trim();
+        const password = (passEl.value || '').trim();
+        if (!username || !password) throw new Error('შეიყვანე მომხ.სახელი და პაროლი.');
+
+        // ეს გამოიძახებს ჩვენს ვორკერს და ქუქს დააყენებს
+        await ServerAuth.login(username, password);
+
+        // წარმატებაზე გადამისამართება
+        window.location.href = 'main.html';
+      } catch (err) {
+  errBox && (errBox.style.display = 'block');
+  errBox && (errBox.textContent = err.message || 'ლოგინი ვერ მოხერხდა.');
+  console.error(err);
+} finally {
+
+        btn && (btn.disabled = false);
+      }
+    });
+  } else {
+    console.warn('login.html: ფორმა ან ველები ვერ ვიპოვე. დარწმუნდი რომ არსებობს id="loginForm" და name="username"/"password".');
+  }
+</script>
+
 
 </body>
 </html>
