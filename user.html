@@ -416,12 +416,10 @@ function renderServices() {
 
   items.forEach(({s, i:origIndex})=>{
 
-// ==== LINKS (ახალი ვარიანტი „წაშლა“-ს ღილაკებით) ====
+// ==== LINKS (უბრალოდ ლინკები, “წაშლა” ღილაკების გარეშე) ====
 let docLink = "";
 if (s.docUrl) {
-  const key = extractKeyFromWorkerUrl(s.docUrl);
-  const delBtn = key ? ` <button class="btn-small btn-delete" onclick="deleteDocFile(${origIndex})">წაშლა</button>` : "";
-  docLink = `<a class="file-link" href="${s.docUrl}" target="_blank" rel="noopener noreferrer">PDF-ის ნახვა</a>${delBtn}`;
+  docLink = `<a class="file-link" href="${s.docUrl}" target="_blank" rel="noopener noreferrer">PDF-ის ნახვა</a>`;
 } else if (s.doc instanceof File) {
   docLink = `<a class="file-link" href="${URL.createObjectURL(s.doc)}" target="_blank">${s.doc.name}</a>`;
 }
@@ -429,11 +427,9 @@ if (s.docUrl) {
 let photosLinks = "";
 if (Array.isArray(s.photoUrls) && s.photoUrls.length) {
   photosLinks = s.photoUrls
-    .map((u, i) => {
-      const key = extractKeyFromWorkerUrl(u);
-      const delBtn = key ? ` <button class="btn-small btn-delete" onclick="deletePhotoFile(${origIndex}, ${i})">წაშლა</button>` : "";
-      return `<a href="#" class="file-link" onclick="openPhotoLightboxService(${origIndex}, ${i}); return false;">Photo ${i+1}</a>${delBtn}`;
-    })
+    .map((u, i) =>
+      `<a href="#" class="file-link" onclick="openPhotoLightboxService(${origIndex}, ${i}); return false;">Photo ${i+1}</a>`
+    )
     .join("<br>");
 } else if (Array.isArray(s.photos) && s.photos.length) {
   photosLinks = s.photos
@@ -589,84 +585,54 @@ if (editingIndex !== null) {
 }
 
 async function deleteService(idx){
-
   if (isViewer()) { alert("დაშვება მხოლოდ Admin/Technician როლებისთვის."); return; }
-  if(confirm("გსურთ წაშლა?")){
-    currentUser.services.splice(idx,1);
-    const idxU = users.findIndex(u => u.id === currentUser.id);
-    if (idxU !== -1) { users[idxU] = currentUser; }
-	localStorage.setItem("users", JSON.stringify(users));
-	await syncUsersToServer();
-	renderServices();
 
+  const s = currentUser.services[idx];
+  if (!s) return;
 
+  if(!confirm("დარწმუნებული ხარ? ჩანაწერი და მასზე მიმაგრებული ყველა ფაილი (PDF/ფოტო) წაიშლება სერვერიდანაც.")){
+    return;
   }
-}
 
-async function deleteDocFile(serviceIndex){
-  const s = currentUser.services[serviceIndex];
-  if (!s?.docUrl) return;
-  const key = extractKeyFromWorkerUrl(s.docUrl);
-  if (!confirm("დარწმუნებული ხარ? PDF წაიშლება სერვერიდანაც.")) return;
+  // 1) მოვაგროვოთ server-ზე შესაშლელი key-ები (მხოლოდ URL-ებიდან; File ობიექტები სერვერზე არაა ატვირთული)
+  const keys = [];
+  const kDoc = s.docUrl ? extractKeyFromWorkerUrl(s.docUrl) : null;
+  if (kDoc) keys.push(kDoc);
 
+  if (Array.isArray(s.photoUrls)) {
+    s.photoUrls.forEach(u => {
+      const k = extractKeyFromWorkerUrl(u);
+      if (k) keys.push(k);
+    });
+  }
+
+  // 2) ვცადოთ server-სide წაშლა (თუ რამე ვერ გაისტარტა, ლოკალურად მაინც გავაგრძელებთ)
   try {
-    if (key) {
-      // თუ ServerStore.deleteFiles გაქვს, გამოიყენე; თუ არა — პირდაპირ worker-სთან fetch:
+    if (keys.length) {
       if (window.ServerStore?.deleteFiles) {
-        await ServerStore.deleteFiles([key]);
+        await ServerStore.deleteFiles(keys);
       } else {
         await fetch('https://restless-lab-c6ef.n-gogolashvili.workers.dev/delete-file', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key })
+          body: JSON.stringify({ keys })
         });
       }
     }
-    delete s.docUrl;
-
-    const idx = users.findIndex(u => u.id === currentUser.id);
-    if (idx !== -1) users[idx] = currentUser;
-    localStorage.setItem('users', JSON.stringify(users));
-    await syncUsersToServer();
-
-    renderServices();
-  } catch(e){
-    alert("წაშლა ვერ მოხერხდა.");
-    console.warn(e);
+  } catch (e) {
+    console.warn('server delete failed:', e); // არ ვაჩერებთ პროცესს
   }
-}
 
-async function deletePhotoFile(serviceIndex, photoIdx){
-  const s = currentUser.services[serviceIndex];
-  if (!Array.isArray(s?.photoUrls) || !s.photoUrls[photoIdx]) return;
-  const url = s.photoUrls[photoIdx];
-  const key = extractKeyFromWorkerUrl(url);
-  if (!confirm("დარწმუნებული ხარ? ფოტო წაიშლება სერვერიდანაც.")) return;
+  // 3) ამოვშალოთ ჩანაწერი ლოკალური users-დან და დავასინქრონოთ
+  currentUser.services.splice(idx, 1);
+  const idxU = users.findIndex(u => u.id === currentUser.id);
+  if (idxU !== -1) { users[idxU] = currentUser; }
 
-  try {
-    if (key) {
-      if (window.ServerStore?.deleteFiles) {
-        await ServerStore.deleteFiles([key]);
-      } else {
-        await fetch('https://restless-lab-c6ef.n-gogolashvili.workers.dev/delete-file', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key })
-        });
-      }
-    }
-    s.photoUrls.splice(photoIdx, 1);
+  localStorage.setItem("users", JSON.stringify(users));
+  await syncUsersToServer();
 
-    const idx = users.findIndex(u => u.id === currentUser.id);
-    if (idx !== -1) users[idx] = currentUser;
-    localStorage.setItem('users', JSON.stringify(users));
-    await syncUsersToServer();
-
-    renderServices();
-  } catch(e){
-    alert("წაშლა ვერ მოხერხდა.");
-    console.warn(e);
-  }
+  // 4) UI refresh
+  renderServices();
 }
 
 
