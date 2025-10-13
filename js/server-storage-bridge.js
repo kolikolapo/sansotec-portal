@@ -45,7 +45,7 @@
   } catch {}
 
   async function pullFromServer() {
-    const raw = await fetchJSON(`${WORKER_BASE}/get-users`, { method: 'GET' });
+        const raw = await fetchJSON(`${WORKER_BASE}/get-users`, { method: 'GET', credentials: 'include' });
     const s = shape(raw || {});
     const u = asArray(s.users);    cache.users    = u;
         const a = asArray(s.appUsers); cache.appUsers = a;
@@ -75,11 +75,12 @@
     if (pushing) { pendingPush = true; return; }
     pushing = true;
     try {
-      await fetchJSON(`${WORKER_BASE}/save-users`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: bodyForSave(),
-      });
+        await fetchJSON(`${WORKER_BASE}/save-users`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: bodyForSave(),
+});
     } finally {
       pushing = false;
       if (pendingPush) { pendingPush = false; pushToServerDebounced(); }
