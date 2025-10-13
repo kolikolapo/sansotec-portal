@@ -110,40 +110,18 @@ tr:hover { background:#f7f7f7; cursor:pointer;}
 <script>
 (async () => {
   try {
-    const me = await ServerAuth.me();
-    if (!me?.authenticated) {
-      window.location.href = '/login.html';
-      return;
-    }
-
-    // ✅ ეს ხაზი დაამატე — ისე, როგორც არის:
-    localStorage.setItem('currentUser', JSON.stringify(me.user));
-
-    const who = document.getElementById('whoami');
-    if (who && me.user) {
-      who.textContent = `${me.user.username} (${me.user.role})`;
-    }
-  } catch (e) {
-    console.error(e);
-    window.location.href = '/login.html';
-  }
-})();
-</script>
-
-<script>
-(async () => {
-  try {
-    const s = await ServerAuth.me();
+    const s = await ServerAuth.me(); // სერვერზე ქუქით ამოწმებს
     if (!s?.authenticated) {
-      localStorage.removeItem('currentUser');
-      location.href = 'login.html';
+      // სესია არაა — გაასუფთავე ადგილობრივი და login-ზე გადადი (არ გადაგისროლოს main-ზე)
+      try { localStorage.removeItem('currentUser'); } catch {}
+      window.location.replace('login.html?stay=1');
       return;
     }
-    // სესია ვალიდურია — განვაახლოთ localStorage-საც
-    localStorage.setItem('currentUser', JSON.stringify(s.user));
+    // სესია არის — ლოკალურადაც დაიკეშოს user, რომ UI-მ იმუშავოს
+    try { localStorage.setItem('currentUser', JSON.stringify(s.user)); } catch {}
   } catch {
-    localStorage.removeItem('currentUser');
-    location.href = 'login.html';
+    try { localStorage.removeItem('currentUser'); } catch {}
+    window.location.replace('login.html?stay=1');
   }
 })();
 </script>
