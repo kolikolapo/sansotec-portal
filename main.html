@@ -130,6 +130,23 @@ tr:hover { background:#f7f7f7; cursor:pointer;}
 })();
 </script>
 
+<script>
+(async () => {
+  try {
+    const s = await ServerAuth.me();
+    if (!s?.authenticated) {
+      localStorage.removeItem('currentUser');
+      location.href = 'login.html';
+      return;
+    }
+    // სესია ვალიდურია — განვაახლოთ localStorage-საც
+    localStorage.setItem('currentUser', JSON.stringify(s.user));
+  } catch {
+    localStorage.removeItem('currentUser');
+    location.href = 'login.html';
+  }
+})();
+</script>
 
 <!-- Sidebar -->
 <div class="sidebar">
@@ -522,15 +539,13 @@ function searchTable() {
 }
 
 // 🚀 Logout with logging
-async function logout(){
-  try {
-    const cu = JSON.parse(localStorage.getItem("currentUser"));
-    if (cu) {
-      const logs = JSON.parse(localStorage.getItem("appLogs")||"[]");
-      logs.unshift({ user: cu.username, action: "Logout", time: new Date().toLocaleString("ka-GE") });
-      localStorage.setItem("appLogs", JSON.stringify(logs));
-    }
-
+async function logout() {
+  try { await ServerAuth.logout(); } catch {}
+  try { localStorage.removeItem('currentUser'); } catch {}
+  // სურვილისამებრ: თუ გინდა, შეგიძლია დროებითაც გაასუფთავო appUsers/ui cache
+  // try { localStorage.removeItem('users'); localStorage.removeItem('appUsers'); } catch {}
+  location.href = 'login.html';
+}
     // ✔️ სერვერზე სესიის დასრულება (ქუქი მოიშლება)
     await ServerAuth.logout();
   } catch (e) {

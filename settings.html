@@ -189,6 +189,34 @@ tr:hover { background:#fafafa; }
 <script src="/js/server-storage-bridge.js"></script>
 
 <script>
+async function logout() {
+  try { await ServerAuth.logout(); } catch {}
+  try { localStorage.removeItem('currentUser'); } catch {}
+  // სურვილისამებრ: თუ გინდა, შეგიძლია დროებითაც გაასუფთავო appUsers/ui cache
+  // try { localStorage.removeItem('users'); localStorage.removeItem('appUsers'); } catch {}
+  location.href = 'login.html';
+}
+</script>
+
+<script>
+(async () => {
+  try {
+    const s = await ServerAuth.me();
+    if (!s?.authenticated) {
+      localStorage.removeItem('currentUser');
+      location.href = 'login.html';
+      return;
+    }
+    // სესია ვალიდურია — განვაახლოთ localStorage-საც
+    localStorage.setItem('currentUser', JSON.stringify(s.user));
+  } catch {
+    localStorage.removeItem('currentUser');
+    location.href = 'login.html';
+  }
+})();
+</script>
+
+<script>
 /* Role helpers */
 function getRole(){
   const cu = JSON.parse(localStorage.getItem("currentUser")||"null");

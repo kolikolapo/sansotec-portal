@@ -249,6 +249,26 @@ footer{
 <script>
 (async () => {
   try {
+    // სერვერი არის ჭეშმარიტი წყარო — ქუქით ამოწმებს
+    const s = await ServerAuth.me(); // აბრუნებს { authenticated, user? }
+    if (s?.authenticated) {
+      // ლოკალურადაც განვაახლოთ
+      localStorage.setItem('currentUser', JSON.stringify(s.user));
+      location.href = 'main.html';
+      return;
+    }
+    // თუ არაა ავტორიზებული — localStorage-ს ნაშთი დავიცალოთ და ვაჩვენოთ ფორმა
+    localStorage.removeItem('currentUser');
+    // აქ არაფერს ვაკეთებთ — შენი არსებული ლოგინის ფორმა ჩნდება ჩვეულებრივ.
+  } catch {
+    localStorage.removeItem('currentUser');
+  }
+})();
+</script>
+
+<script>
+(async () => {
+  try {
     const me = await ServerAuth.me();            // ქუქით ამოწმებს სესიაა თუ არა
     if (me?.authenticated && me.user) {
       // ლოკალშიც შევინახოთ, რომ main.html-ზე როლი/სახელი მუშაობდეს
