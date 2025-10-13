@@ -248,41 +248,27 @@ footer{
 
 <script>
 (async () => {
+  // special case: თუ login-ზე მოვედით logout-ის შემდეგ ან სპეციალურად,
+  // URL-ში გექნება ?stay=1 ან ?logout=1 — ასეთ დროს არ უნდა გადავაგდოთ main-ზე
+  const url = new URL(window.location.href);
+  const stay = url.searchParams.has('stay') || url.searchParams.get('logout') === '1';
+
   try {
-    // სერვერი არის ჭეშმარიტი წყარო — ქუქით ამოწმებს
-    const s = await ServerAuth.me(); // აბრუნებს { authenticated, user? }
+    const s = await ServerAuth.me(); // { authenticated, user? }
     if (s?.authenticated) {
-      // ლოკალურადაც განვაახლოთ
       localStorage.setItem('currentUser', JSON.stringify(s.user));
-      location.href = 'main.html';
-      return;
+      if (!stay) {
+        window.location.replace('main.html');
+        return;
+      }
+    } else {
+      localStorage.removeItem('currentUser');
     }
-    // თუ არაა ავტორიზებული — localStorage-ს ნაშთი დავიცალოთ და ვაჩვენოთ ფორმა
-    localStorage.removeItem('currentUser');
-    // აქ არაფერს ვაკეთებთ — შენი არსებული ლოგინის ფორმა ჩნდება ჩვეულებრივ.
   } catch {
     localStorage.removeItem('currentUser');
   }
 })();
 </script>
-
-<script>
-(async () => {
-  try {
-    const me = await ServerAuth.me();            // ქუქით ამოწმებს სესიაა თუ არა
-    if (me?.authenticated && me.user) {
-      // ლოკალშიც შევინახოთ, რომ main.html-ზე როლი/სახელი მუშაობდეს
-      localStorage.setItem('currentUser', JSON.stringify(me.user));
-      // უკვე შიგნითაა — პირდაპირ მთავარზე
-      window.location.href = 'main.html';
-      return;
-    }
-  } catch(e) {
-    console.warn('me() error:', e);
-  }
-})();
-</script>
-
 
 <script>
 /* Seed users */

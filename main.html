@@ -540,21 +540,9 @@ function searchTable() {
 
 // 🚀 Logout with logging
 async function logout() {
-  try { await ServerAuth.logout(); } catch {}
-  try { localStorage.removeItem('currentUser'); } catch {}
-  // სურვილისამებრ: თუ გინდა, შეგიძლია დროებითაც გაასუფთავო appUsers/ui cache
-  // try { localStorage.removeItem('users'); localStorage.removeItem('appUsers'); } catch {}
-  location.href = 'login.html';
-}
-    // ✔️ სერვერზე სესიის დასრულება (ქუქი მოიშლება)
-    await ServerAuth.logout();
-  } catch (e) {
-    console.warn('logout error:', e);
-  } finally {
-    // ✔️ ლოკალურიც გავწმინდოთ და გადავალთ login-ზე
-    localStorage.removeItem("currentUser");
-    window.location.href = "login.html";
-  }
+  try { await window.ServerAuth?.logout?.(); } catch {}
+  try { localStorage.clear(); sessionStorage.clear(); } catch {}
+  window.location.href = 'login.html?stay=1'; // ვამბობთ: login-ზე დამტოვე, არ გადამაგდო main-ზე
 }
 </script>
 
