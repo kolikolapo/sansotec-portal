@@ -47,9 +47,10 @@
   async function pullFromServer() {
     const raw = await fetchJSON(`${WORKER_BASE}/get-users`, { method: 'GET' });
     const s = shape(raw || {});
-    const u = asArray(s.users);    if (u.length) cache.users = u;
-    const a = asArray(s.appUsers); if (a.length) cache.appUsers = a;
-    const l = asArray(s.appLogs);  if (l.length) cache.appLogs = l;
+    const u = asArray(s.users);    cache.users    = u;
+        const a = asArray(s.appUsers); cache.appUsers = a;
+        const l = asArray(s.appLogs);  cache.appLogs  = l;
+
 
     // სერვერიდან რაც მოვიდა, ჩავწეროთ ნამდვილ localStorage-შიც,
     // რათა შენი არსებული კოდი/refresh-იც სტაბილური იყოს.
@@ -63,8 +64,12 @@
 
   // Worker /save-users ელოდება სუფთა users მასივს
   function bodyForSave() {
-    return JSON.stringify({ users: Array.isArray(cache.users) ? cache.users : [] });
-  }
+  return JSON.stringify({
+    users:    Array.isArray(cache.users)    ? cache.users    : [],
+    appUsers: Array.isArray(cache.appUsers) ? cache.appUsers : [],
+    merge: true
+  });
+}
 
   async function pushToServerDebounced() {
     if (pushing) { pendingPush = true; return; }
@@ -115,7 +120,7 @@
     try { _setItem(key, JSON.stringify(arr)); } catch {}
 
     // 3) users მასივი → სერვერზე
-    if (key === 'users') pushToServerDebounced();
+    if (key === 'users' || key === 'appUsers') pushToServerDebounced();
     // შენიშვნა: თუ გინდა appUsers/logs-ის ცალკე ატანა, Worker-ს უნდა ჰქონდეს შესაბამისი endpoint/ფორმატი.
   };
 
@@ -127,7 +132,7 @@
     if (key === 'logs')     cache.appLogs = [];
 
     try { _removeItem(key); } catch {}
-    if (key === 'users') pushToServerDebounced();
+    if (key === 'users' || key === 'appUsers') pushToServerDebounced();
   };
 
   localStorage.clear = function() {
@@ -274,15 +279,37 @@ window.ServerStore.getUsers = async function () {
   return Array.isArray(j?.users) ? j.users : [];
 };
 
+window.ServerStore.getAppUsers = async function () {
+  const r = await fetch(`${WORKER_UPLOAD_BASE}/get-users`, { method: 'GET' });
+  if (!r.ok) return [];
+  const j = await r.json().catch(() => ({}));
+  return Array.isArray(j?.appUsers) ? j.appUsers : [];
+};
+
 window.ServerStore.saveUsers = async function (usersArray) {
-  // მოელოდება: { users: [...] }
   const r = await fetch(`${WORKER_UPLOAD_BASE}/save-users`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ users: Array.isArray(usersArray) ? usersArray : [] })
+    body: JSON.stringify({
+      users: Array.isArray(usersArray) ? usersArray : [],
+      merge: true
+    })
   });
   return r.ok;
 };
+
+window.ServerStore.saveAppUsers = async function (appUsersArray) {
+  const r = await fetch(`${WORKER_UPLOAD_BASE}/save-users`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      appUsers: Array.isArray(appUsersArray) ? appUsersArray : [],
+      merge: true
+    })
+  });
+  return r.ok;
+};
+
 
 // === END: SIMPLE IMAGE/PDF UPLOAD (with image->WEBP compress) ===
 

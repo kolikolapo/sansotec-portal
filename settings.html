@@ -224,16 +224,14 @@ function debounce(fn, ms){
 
 async function saveUsersToServer(users){
   try {
-    if (window.ServerStore && typeof ServerStore.saveAppUsers === 'function') {
-      await ServerStore.saveAppUsers(users);
-    } else {
-      await fetch('/save-users', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ appUsers: users, merge: true })
-      });
-    }
+    // პირდაპირ ვორკერზე — appUsers + merge:true
+    await fetch('/save-users', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ appUsers: users, merge: true })
+    });
+
     localStorage.setItem("appUsers", JSON.stringify(users));
     console.debug('appUsers synced to server:', users.length);
   } catch(e){
@@ -344,13 +342,9 @@ function deleteUser(i){
 (async function initUsersFromServer(){
   try {
     let users = [];
-    if (window.ServerStore && typeof ServerStore.getAppUsers === "function") {
-      users = await ServerStore.getAppUsers(); // appUsers
-    } else {
-      const r = await fetch('/get-users', { credentials: 'include' });
-      const j = await r.json().catch(()=>({users:[], appUsers:[]}));
-      users = Array.isArray(j?.appUsers) ? j.appUsers : [];
-    }
+    const r = await fetch('/get-users', { credentials: 'include' });
+    const j = await r.json().catch(()=>({users:[], appUsers:[]}));
+    users = Array.isArray(j?.appUsers) ? j.appUsers : [];
 
     appUsers = users;
     renderUsers();
