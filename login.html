@@ -243,35 +243,52 @@ footer{
   </div>
 </footer>
 
+<script>
+(function () {
+  const url = new URL(location.href);
+  const stay = url.searchParams.has('stay') || url.searchParams.get('logout') === '1';
+
+  if (stay) {
+    // 1) ადგილობრივი სესიის ნაშთის სრულად გაწმენდა
+    try { localStorage.clear(); sessionStorage.clear(); } catch {}
+
+    // 2) სერვერზე ქუქის გაუქმება (ფონი)
+    (async () => {
+      try {
+        await fetch('https://restless-lab-c6ef.n-gogolashvili.workers.dev/logout', {
+          method: 'POST',
+          credentials: 'include'
+        });
+      } catch {}
+    })();
+
+    // 3) უსაფრთხო სტოპერები — რომ ვერც ერთი სკრიპტმა ვეღარ გადაგაგდოს main-ზე ამ დატვირთვაზე
+    //    (თუ მაინც სცდის window.location.replace/assign-ს — იგნორად იქცეს)
+    const NOOP = () => {};
+    try {
+      Object.defineProperty(window.location, 'replace', { value: NOOP });
+      Object.defineProperty(window.location, 'assign',  { value: NOOP });
+      Object.defineProperty(window.location, 'href',    { 
+        set: NOOP, get() { return window.location.toString(); } 
+      });
+    } catch {}
+
+    // 4) მცირე ნიშანი სხვა სკრიპტებისთვის (თუ რამე ამოწმებს)
+    window.__LOGIN_STAY__ = true;
+  }
+})();
+</script>
 
 <script src="/js/server-storage-bridge.js"></script>
 
 <script>
-(async () => {
-  const url  = new URL(location.href);
+/* ლოგინ გვერდზე აღარანაირი ავტო-შემოწმება/რიდაირექთი. 
+   მხოლოდ doLogin() გადაყვანს main-ზე წარმატების შემდეგ. */
+(function(){
+  const url = new URL(location.href);
   const stay = url.searchParams.has('stay') || url.searchParams.get('logout') === '1';
-
-  // ✅ თუ ?stay=1 ან ?logout=1 არის — საერთოდ არც ვიძახებთ /me-ს.
-  // პირდაპირ ვასუფთავებთ localStorage/sessionStorage-ს და უსაფრთხოებისთვის
-  // ვიძახებთ /logout-საც, რომ სერვერზე ქუქი 100%-ით გაუქმდეს (CHIPS partition-შიც).
   if (stay) {
-    try { await ServerAuth.logout(); } catch {}
-    try { localStorage.clear(); sessionStorage.clear(); } catch {}
-    // დარჩი login-ზე, ფორმა ჩანს, არ ხდება redirect.
-    return;
-  }
-
-  // სხვა შემთხვევაში ნორმალური ავტომატური შესვლა:
-  try {
-    const s = await ServerAuth.me(); // { authenticated, user? }
-    if (s?.authenticated) {
-      try { localStorage.setItem('currentUser', JSON.stringify(s.user)); } catch {}
-      location.replace('main.html');
-      return;
-    }
-    // არაა ავტორიზებული — დავასუფთავოთ ადგილობრივი ნაშთი
-    try { localStorage.removeItem('currentUser'); } catch {}
-  } catch {
+    // logout უკვე აკეთებ ზემოთ პირველ სკრიპტში; აქ უბრალოდ ქეშის დასუფთავება სჯობს
     try { localStorage.removeItem('currentUser'); } catch {}
   }
 })();
