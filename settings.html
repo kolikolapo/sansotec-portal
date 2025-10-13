@@ -222,20 +222,22 @@ function debounce(fn, ms){
   let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); };
 }
 
-async function saveUsersToServer(users){
+async function saveUsersToServer(appUsersArray){
   try {
-    // პირდაპირ ვორკერზე — appUsers + merge:true
-    await fetch('/save-users', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ appUsers: users, merge: true })
-    });
-
-    localStorage.setItem("appUsers", JSON.stringify(users));
-    console.debug('appUsers synced to server:', users.length);
+    if (window.ServerStore && typeof ServerStore.saveAppUsers === 'function') {
+      await ServerStore.saveAppUsers(appUsersArray);
+    } else {
+      await fetch('/save-users', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ appUsers: appUsersArray, merge: true })
+      });
+    }
+    localStorage.setItem("appUsers", JSON.stringify(appUsersArray)); // ლოკალურადაც
+    console.debug('appUsers synced to server:', appUsersArray.length);
   } catch(e){
-    console.error('saveUsersToServer(appUsers) failed:', e);
+    console.error('saveUsersToServer failed:', e);
   }
 }
 
@@ -338,19 +340,32 @@ function deleteUser(i){
   }
 }
 
-// INIT from server (appUsers)
 (async function initUsersFromServer(){
   try {
-    let users = [];
-    const r = await fetch('/get-users', { credentials: 'include' });
-    const j = await r.json().catch(()=>({users:[], appUsers:[]}));
-    users = Array.isArray(j?.appUsers) ? j.appUsers : [];
+    let users = [], appUsersSrv = [];
 
-    appUsers = users;
+    if (window.ServerStore && typeof ServerStore.getUsers === "function") {
+      // თუ გინდა, შეგიძლია გამოიყენო ორი ცალკე მეთოდი:
+      // const all = await ServerStore.getUsers(); // ← თუ აბრუნებს ობიექტს არაა სტანდარტული
+      // ჩვენ პირდაპირ /get-users წავიკითხოთ რომ ორივე ველი მოვიდეს:
+      const r = await fetch('/get-users', { credentials: 'include' });
+      const j = await r.json().catch(()=>({users:[], appUsers:[]}));
+      users       = Array.isArray(j?.users) ? j.users : [];
+      appUsersSrv = Array.isArray(j?.appUsers) ? j.appUsers : [];
+    } else {
+      const r = await fetch('/get-users', { credentials: 'include' });
+      const j = await r.json().catch(()=>({users:[], appUsers:[]}));
+      users       = Array.isArray(j?.users) ? j.users : [];
+      appUsersSrv = Array.isArray(j?.appUsers) ? j.appUsers : [];
+    }
+
+    // UI-სთვის ვიყენოთ appUsers, და თუ ცარიელია – ჩავარდე users-ზე
+    appUsers = appUsersSrv.length ? appUsersSrv : users;
+
     renderUsers();
     renderLogs();
   } catch (e) {
-    console.error('Failed to load appUsers from server:', e);
+    console.error('Failed to load users from server:', e);
     try { appUsers = JSON.parse(localStorage.getItem("appUsers")||"[]"); } catch {}
     renderUsers();
     renderLogs();
