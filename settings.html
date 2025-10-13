@@ -217,6 +217,36 @@ function updateUIByRole(){
 }
 updateUIByRole();
 
+// ---- Server save helpers (debounce) ----
+function debounce(fn, ms){
+  let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); };
+}
+
+async function saveUsersToServer(users){
+  try {
+    if (window.ServerStore && typeof ServerStore.saveUsers === 'function') {
+      // ბრიჯი თუ გაქვს — სჯობს ეს
+      await ServerStore.saveUsers(users);
+    } else {
+      // პირდაპირ ვორკერზე
+      await fetch('/save-users', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ users })
+      });
+    }
+    // სურვილისამებრ ლოკალური cache
+    localStorage.setItem("appUsers", JSON.stringify(users));
+    console.debug('users synced to server:', users.length);
+  } catch(e){
+    console.error('saveUsersToServer failed:', e);
+  }
+}
+
+const saveUsersToServerDebounced = debounce(saveUsersToServer, 700);
+
+
 /* Users + Logs */
 let appUsers = [];
 let appLogs = JSON.parse(localStorage.getItem("appLogs")||"[]");
@@ -291,19 +321,25 @@ function saveUser(){
   const userData={fullName:fn,username:u,email:e,password:p,role:r,disabled:false};
   if(editingIndex!==null){ appUsers[editingIndex]=userData; }
   else { appUsers.push(userData); }
-  localStorage.setItem("appUsers",JSON.stringify(appUsers));
+  localStorage.setItem("appUsers", JSON.stringify(appUsers));
+  saveUsersToServerDebounced(appUsers);
   closeUserModal(); renderUsers();
+
 }
 function toggleUser(i){
   appUsers[i].disabled=!appUsers[i].disabled;
-  localStorage.setItem("appUsers",JSON.stringify(appUsers));
+  localStorage.setItem("appUsers", JSON.stringify(appUsers));
+  saveUsersToServerDebounced(appUsers);
   renderUsers();
+
 }
 function deleteUser(i){
   if(confirm("წაშლა?")){
     appUsers.splice(i,1);
-    localStorage.setItem("appUsers",JSON.stringify(appUsers));
-    renderUsers();
+  localStorage.setItem("appUsers", JSON.stringify(appUsers));
+  saveUsersToServerDebounced(appUsers);
+  renderUsers();
+
   }
 }
 
