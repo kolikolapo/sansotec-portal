@@ -218,7 +218,7 @@ function updateUIByRole(){
 updateUIByRole();
 
 /* Users + Logs */
-let appUsers = JSON.parse(localStorage.getItem("appUsers")||"[]");
+let appUsers = [];
 let appLogs = JSON.parse(localStorage.getItem("appLogs")||"[]");
 
 function renderUsers(){
@@ -226,7 +226,9 @@ function renderUsers(){
   tbody.innerHTML="";
   appUsers.forEach((u,i)=>{
     const tr=document.createElement("tr");
-    const maskedPass = "•".repeat(u.password.length);
+    const maskedPass = (u.password && typeof u.password === 'string')
+  ? "•".repeat(u.password.length)
+  : "";
     tr.innerHTML=`
       <td>${u.fullName||""}</td>
       <td>${u.username}</td>
@@ -275,7 +277,7 @@ function editUser(i){
   document.getElementById("fullName").value=u.fullName||"";
   document.getElementById("username").value=u.username;
   document.getElementById("email").value=u.email||"";
-  document.getElementById("password").value=u.password; // სრული ტექსტი
+  document.getElementById("password").value = (typeof u.password === 'string' ? u.password : '');
   document.getElementById("role").value=u.role;
   document.getElementById("userModal").style.display="block";
 }
@@ -305,19 +307,31 @@ function deleteUser(i){
   }
 }
 
-renderUsers(); renderLogs();
+// INIT from server (read-only)
+(async function initUsersFromServer(){
+  try {
+    // პრიორიტეტი: ServerStore თუ გაქვს ბრიჯში; თუ არა, პირდაპირ fetch
+    let users = [];
+    if (window.ServerStore && typeof ServerStore.getUsers === "function") {
+      const res = await ServerStore.getUsers(); // უნდა დააბრუნოს {users:[...]} ან უშუალოდ მასივი
+      users = Array.isArray(res?.users) ? res.users : (Array.isArray(res) ? res : []);
+    } else {
+      const r = await fetch('/get-users', { credentials: 'include' });
+      const j = await r.json().catch(()=>({users:[]}));
+      users = Array.isArray(j?.users) ? j.users : [];
+    }
 
-/* Logout with logging */
-function logout(){
-  const cu = JSON.parse(localStorage.getItem("currentUser"));
-  if(cu){
-    const logs=JSON.parse(localStorage.getItem("appLogs")||"[]");
-    logs.unshift({ user:cu.username, action:"Logout", time:new Date().toLocaleString("ka-GE") });
-    localStorage.setItem("appLogs",JSON.stringify(logs));
+    appUsers = users;
+    renderUsers();
+    renderLogs();
+  } catch (e) {
+    console.error('Failed to load users from server:', e);
+    // fallback — თუ სერვერი არ მიუწვდება, ადგილობრივი მაინც გამოჩნდეს
+    try { appUsers = JSON.parse(localStorage.getItem("appUsers")||"[]"); } catch {}
+    renderUsers();
+    renderLogs();
   }
-  localStorage.removeItem("currentUser");
-  window.location.href="login.html";
-}
+})();
 </script>
 
 </body>
