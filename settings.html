@@ -225,16 +225,13 @@ function debounce(fn, ms){
 async function saveUsersToServer(appUsersArray){
   try {
     if (window.ServerStore && typeof ServerStore.saveAppUsers === 'function') {
-      await ServerStore.saveAppUsers(appUsersArray);
+      const ok = await ServerStore.saveAppUsers(appUsersArray); // workers.dev-ზე POST /save-users {appUsers, merge:true}
+      if (!ok) throw new Error('saveAppUsers returned !ok');
     } else {
-      await fetch('/save-users', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ appUsers: appUsersArray, merge: true })
-      });
+      throw new Error('ServerStore.saveAppUsers missing'); // გვინდა რომ ყოველთვის worker-ით წავიდეს
     }
-    localStorage.setItem("appUsers", JSON.stringify(appUsersArray)); // ლოკალურადაც
+    // ლოკალურადაც შევინახოთ, რომ გვერდშივე UI სტაბილური იყოს
+    localStorage.setItem("appUsers", JSON.stringify(appUsersArray));
     console.debug('appUsers synced to server:', appUsersArray.length);
   } catch(e){
     console.error('saveUsersToServer failed:', e);
@@ -242,7 +239,6 @@ async function saveUsersToServer(appUsersArray){
 }
 
 const saveUsersToServerDebounced = debounce(saveUsersToServer, 700);
-
 
 /* Users + Logs */
 let appUsers = [];
@@ -342,25 +338,10 @@ function deleteUser(i){
 
 (async function initUsersFromServer(){
   try {
-    let users = [], appUsersSrv = [];
+    const appUsersSrv = await (window.ServerStore?.getAppUsers?.() ?? Promise.resolve([]));
+    const usersSrv    = await (window.ServerStore?.getUsers?.() ?? Promise.resolve([]));
 
-    if (window.ServerStore && typeof ServerStore.getUsers === "function") {
-      // თუ გინდა, შეგიძლია გამოიყენო ორი ცალკე მეთოდი:
-      // const all = await ServerStore.getUsers(); // ← თუ აბრუნებს ობიექტს არაა სტანდარტული
-      // ჩვენ პირდაპირ /get-users წავიკითხოთ რომ ორივე ველი მოვიდეს:
-      const r = await fetch('/get-users', { credentials: 'include' });
-      const j = await r.json().catch(()=>({users:[], appUsers:[]}));
-      users       = Array.isArray(j?.users) ? j.users : [];
-      appUsersSrv = Array.isArray(j?.appUsers) ? j.appUsers : [];
-    } else {
-      const r = await fetch('/get-users', { credentials: 'include' });
-      const j = await r.json().catch(()=>({users:[], appUsers:[]}));
-      users       = Array.isArray(j?.users) ? j.users : [];
-      appUsersSrv = Array.isArray(j?.appUsers) ? j.appUsers : [];
-    }
-
-    // UI-სთვის ვიყენოთ appUsers, და თუ ცარიელია – ჩავარდე users-ზე
-    appUsers = appUsersSrv.length ? appUsersSrv : users;
+    appUsers = (Array.isArray(appUsersSrv) && appUsersSrv.length) ? appUsersSrv : usersSrv;
 
     renderUsers();
     renderLogs();
