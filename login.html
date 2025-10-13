@@ -248,24 +248,31 @@ footer{
 
 <script>
 (async () => {
-  // special case: თუ login-ზე მოვედით logout-ის შემდეგ ან სპეციალურად,
-  // URL-ში გექნება ?stay=1 ან ?logout=1 — ასეთ დროს არ უნდა გადავაგდოთ main-ზე
-  const url = new URL(window.location.href);
+  const url  = new URL(location.href);
   const stay = url.searchParams.has('stay') || url.searchParams.get('logout') === '1';
 
+  // ✅ თუ ?stay=1 ან ?logout=1 არის — საერთოდ არც ვიძახებთ /me-ს.
+  // პირდაპირ ვასუფთავებთ localStorage/sessionStorage-ს და უსაფრთხოებისთვის
+  // ვიძახებთ /logout-საც, რომ სერვერზე ქუქი 100%-ით გაუქმდეს (CHIPS partition-შიც).
+  if (stay) {
+    try { await ServerAuth.logout(); } catch {}
+    try { localStorage.clear(); sessionStorage.clear(); } catch {}
+    // დარჩი login-ზე, ფორმა ჩანს, არ ხდება redirect.
+    return;
+  }
+
+  // სხვა შემთხვევაში ნორმალური ავტომატური შესვლა:
   try {
     const s = await ServerAuth.me(); // { authenticated, user? }
     if (s?.authenticated) {
-      localStorage.setItem('currentUser', JSON.stringify(s.user));
-      if (!stay) {
-        window.location.replace('main.html');
-        return;
-      }
-    } else {
-      localStorage.removeItem('currentUser');
+      try { localStorage.setItem('currentUser', JSON.stringify(s.user)); } catch {}
+      location.replace('main.html');
+      return;
     }
+    // არაა ავტორიზებული — დავასუფთავოთ ადგილობრივი ნაშთი
+    try { localStorage.removeItem('currentUser'); } catch {}
   } catch {
-    localStorage.removeItem('currentUser');
+    try { localStorage.removeItem('currentUser'); } catch {}
   }
 })();
 </script>
