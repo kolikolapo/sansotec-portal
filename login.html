@@ -295,29 +295,6 @@ footer{
 </script>
 
 <script>
-/* Seed users */
-(function seedUsers(){
-  const USERS_SEED_VERSION = "v2";
-  const versionKey = "appUsersVersion";
-  const usersKey   = "appUsers";
-
-  const desired = [
-    { username:"admin",  password:"admin",  role:"Admin",      fullName:"ადმინი" },
-    { username:"sandro", password:"sandro", role:"Viewer",     fullName:"სანდრო" },
-    { username:"giorgi", password:"giorgi", role:"Viewer",     fullName:"გიორგი" },
-    { username:"niko",   password:"ნიკო",   role:"Technician", fullName:"ნიკო"   },
-    { username:"vaxo",   password:"vaxo",   role:"Technician", fullName:"ვახო"   }
-  ];
-
-  const currentVersion = localStorage.getItem(versionKey);
-  if (!currentVersion || currentVersion !== USERS_SEED_VERSION) {
-    localStorage.setItem(usersKey, JSON.stringify(desired));
-    localStorage.setItem(versionKey, USERS_SEED_VERSION);
-  } else if (!localStorage.getItem(usersKey)) {
-    localStorage.setItem(usersKey, JSON.stringify(desired));
-  }
-})();
-
 function togglePassword(btn){
   const ip = document.getElementById("password");
   if (ip.type === "password") {
