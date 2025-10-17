@@ -246,28 +246,6 @@ footer{
 <script src="/js/server-storage-bridge.js"></script>
 
 <script>
-/* Seed users */
-(function seedUsers(){
-  const USERS_SEED_VERSION = "v2";
-  const versionKey = "appUsersVersion";
-  const usersKey   = "appUsers";
-
-  const desired = [
-    { username:"admin",  password:"admin",  role:"Admin",      fullName:"ადმინი" },
-    { username:"sandro", password:"sandro", role:"Viewer",     fullName:"სანდრო" },
-    { username:"giorgi", password:"giorgi", role:"Viewer",     fullName:"გიორგი" },
-    { username:"niko",   password:"ნიკო",   role:"Technician", fullName:"ნიკო"   },
-    { username:"vaxo",   password:"vaxo",   role:"Technician", fullName:"ვახო"   }
-  ];
-
-  const currentVersion = localStorage.getItem(versionKey);
-  if (!currentVersion || currentVersion !== USERS_SEED_VERSION) {
-    localStorage.setItem(usersKey, JSON.stringify(desired));
-    localStorage.setItem(versionKey, USERS_SEED_VERSION);
-  } else if (!localStorage.getItem(usersKey)) {
-    localStorage.setItem(usersKey, JSON.stringify(desired));
-  }
-})();
 
 function togglePassword(){
   const ip = document.getElementById("password");
@@ -277,27 +255,76 @@ function togglePassword(){
 }
 document.addEventListener("keydown", (e)=>{ if(e.key === "Enter") doLogin(); });
 
-function doLogin(){
+const WORKER_BASE = 'https://restless-lab-c6ef.n-gogolashvili.workers.dev';
+
+const errorEl = document.getElementById("error");
+["username","password"].forEach(id=>{
+  const el = document.getElementById(id);
+  el.addEventListener("input", ()=> { if (errorEl) errorEl.style.display = "none"; });
+});
+
+async function doLogin(){
   const u = document.getElementById("username").value.trim();
   const p = document.getElementById("password").value;
   const remember = document.getElementById("remember").checked;
   const errorEl = document.getElementById("error");
 
-  const users = JSON.parse(localStorage.getItem("appUsers")||"[]");
-  const found = users.find(x => x.username === u && x.password === p);
+  // 1) პირველი შესვლა: ხელით გაწერილი ადმინი
+  if (u === 'admin' && p === 'ChangeMe123!') {
+    const currentUser = {
+      username: 'admin',
+      role: 'Admin',
+      fullName: 'ადმინი',
+      loginAt: new Date().toISOString(),
+      remember
+    };
+    localStorage.setItem("currentUser", JSON.stringify(currentUser));
 
-  if(!found){ errorEl.style.display = "block"; return; }
+    // Login ლოგი (როგორც გაქვს)
+    const logs = JSON.parse(localStorage.getItem("appLogs")||"[]");
+    logs.unshift({ user:'admin', action:'Login', time:new Date().toLocaleString('ka-GE') });
+    localStorage.setItem("appLogs", JSON.stringify(logs));
 
+    window.location.href = "main.html";
+    return;
+  }
+
+  // 2) სერვერიდან წამოიღე appUsers
+  let appUsers = [];
+  try {
+    const r = await fetch(`${WORKER_BASE}/get-users`, { method:'GET', credentials:'include' });
+    if (r.ok) {
+      const j = await r.json().catch(()=> ({}));
+      appUsers = Array.isArray(j?.appUsers) ? j.appUsers : [];
+    }
+  } catch (e) {
+    // ჩუმად, უბრალოდ ცარიელი დარჩება appUsers
+  }
+
+  // 3) მოძებნე შესაბამისი user/password appUsers-ში
+  const found = appUsers.find(x =>
+    (x?.username || '').trim().toLowerCase() === u.toLowerCase() &&
+    (x?.password || '') === p &&
+    (x?.disabled !== true)
+  );
+
+  if (!found) {
+    // ვაჩვენოთ შეცდომა და დავრჩეთ ლოგინზე
+    if (errorEl) errorEl.style.display = "block";
+    return;
+  }
+
+  // 4) წარმატება — currentUser შეინახე და გადადი main-ზე
   const currentUser = {
     username: found.username,
-    role: found.role,
+    role: found.role || 'Viewer',
     fullName: found.fullName || found.username,
     loginAt: new Date().toISOString(),
     remember
   };
   localStorage.setItem("currentUser", JSON.stringify(currentUser));
 
-  // ✅ Login-ის ლოგირება
+  // Login ლოგი (შენებურადვე)
   const logs = JSON.parse(localStorage.getItem("appLogs")||"[]");
   logs.unshift({ user: found.username, action:"Login", time:new Date().toLocaleString("ka-GE") });
   localStorage.setItem("appLogs", JSON.stringify(logs));
