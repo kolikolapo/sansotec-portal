@@ -105,23 +105,6 @@ tr:hover { background:#f7f7f7; cursor:pointer;}
 </head>
 <body>
 
-<script src="/js/server-storage-bridge.js"></script>
-
-<script>
-(async () => {
-  try {
-    const s = await ServerAuth.me();
-    if (!s?.authenticated) {
-      location.href = 'login.html?stay=1';
-      return;
-    }
-    try { localStorage.setItem('currentUser', JSON.stringify(s.user)); } catch {}
-  } catch {
-    location.href = 'login.html?stay=1';
-  }
-})();
-</script>
-
 <!-- Sidebar -->
 <div class="sidebar">
   <img src="SANSO.jpg" alt="Sanso Logo">
@@ -202,6 +185,8 @@ tr:hover { background:#f7f7f7; cursor:pointer;}
   </div>
 </div>
 
+<script src="/js/server-storage-bridge.js"></script>
+
 <script>
   // ახალ ვერსიაში ვაკეთებთ *ფუნქციას* (არა IIFE-ს), რათა სხვა კოდმა შეძლოს "await"-ით დალოდება
   window.bootstrapFromServerIfEmpty = async function () {
@@ -222,6 +207,11 @@ tr:hover { background:#f7f7f7; cursor:pointer;}
 
 
 <script>
+/* ===== Guard ===== */
+(function(){
+  const cu = JSON.parse(localStorage.getItem("currentUser")||"null");
+  if(!cu){ window.location.href = "login.html"; }
+})();
 
 /* ===== Role helpers ===== */
 function getRole(){
@@ -513,10 +503,15 @@ function searchTable() {
 }
 
 // 🚀 Logout with logging
-async function logout() {
-  try { await window.ServerAuth?.logout?.(); } catch {}
-  try { localStorage.clear(); sessionStorage.clear(); } catch {}
-  window.location.href = 'login.html?stay=1'; // ვამბობთ: login-ზე დამტოვე, არ გადამაგდო main-ზე
+function logout(){
+  const cu = JSON.parse(localStorage.getItem("currentUser"));
+  if(cu){
+    const logs=JSON.parse(localStorage.getItem("appLogs")||"[]");
+    logs.unshift({ user:cu.username, action:"Logout", time:new Date().toLocaleString("ka-GE") });
+    localStorage.setItem("appLogs",JSON.stringify(logs));
+  }
+  localStorage.removeItem("currentUser");
+  window.location.href="login.html";
 }
 </script>
 
@@ -565,77 +560,6 @@ async function logout() {
       }
     };
   })();
-</script>
-
-<script>
-// --- კლიენტების ნორმალიზაცია (უსაფრთხოდ გაწმენდილი ველები) ---
-function normalizeCustomer(raw = {}) {
-  const u = { ...raw };
-  // სახელის ალტერნატივები
-  if (!u.fullName) u.fullName = u.name || u.title || "";
-  // მომხმარებლის სახელი (თუ გაქვს ცალკე)
-  if (!u.username) u.username = u.user || u.login || "";
-  // ელფოსტა/ტელეფონი თუ არსებობს
-  if (!u.email)  u.email  = u.mail || u.emailAddress || "";
-  if (!u.phone)  u.phone  = u.tel || u.mobile || "";
-  // სტატუსი ფეხზე დადგეს ბულეთად
-  if (typeof u.disabled !== "boolean") u.disabled = !!u.isDisabled;
-
-  return {
-    fullName: String(u.fullName || "").trim(),
-    username: String(u.username || "").trim(),
-    email:    String(u.email || "").trim(),
-    phone:    String(u.phone || "").trim(),
-    disabled: !!u.disabled,
-    // სხვა ველები თუ გჭირდება, დაამატე აქვე (address, object, note...)
-  };
-}
-function normalizeCustomers(arr){
-  return Array.isArray(arr) ? arr.map(normalizeCustomer).filter(x => x.fullName || x.username) : [];
-}
-
-// --- აქ შეინახება კლიენტების სია, რასაც UI იყენებს ---
-let customers = [];
-
-(async function loadCustomersForMain(){
-  try {
-    // 0) სესია გადავამოწმოთ
-    const s = await (window.ServerAuth?.me?.() ?? Promise.resolve({authenticated:false}));
-    if (!s?.authenticated) {
-      try { localStorage.removeItem('currentUser'); } catch {}
-      location.replace('login.html?stay=1');
-      return;
-    }
-
-    // 1) ამოღება სერვერიდან: ეს არის **კლიენტების** სია, არა appUsers
-    const usersSrv = await (window.ServerStore?.getUsers?.() ?? Promise.resolve([]));
-    customers = normalizeCustomers(usersSrv);
-
-    // 2) cache ლოკალში (არ არის authoritative, უბრალოდ სწრაფი refresh-თვის)
-    try { localStorage.setItem('users', JSON.stringify(customers)); } catch {}
-
-    // 3) თუ შენი renderer ელოდება გლობალ `users`-ს:
-    window.users = customers;
-
-    // 4) განაახლე ცხრილი
-    if (typeof renderUsers === 'function') renderUsers(); // ან renderUsers(customers) თუ ასე გაქვს დაწერილი
-  } catch (e) {
-    console.error('main: failed to load users from server:', e);
-    //fallback — ლოკალური cache მაინც ვცადოთ
-    try { customers = normalizeCustomers(JSON.parse(localStorage.getItem('users')||'[]')); } catch { customers = []; }
-    window.users = customers;
-    if (typeof renderUsers === 'function') renderUsers();
-  }
-})();
-
-// სხვა ტაბიდან ცვლილებების მოსმენა (თუ settings-იდან გადაიწერა users სია)
-window.addEventListener('storage', (ev)=>{
-  if (ev.key === 'users') {
-    try { customers = normalizeCustomers(JSON.parse(ev.newValue||'[]')); } catch { customers = []; }
-    window.users = customers;
-    if (typeof renderUsers === 'function') renderUsers();
-  }
-});
 </script>
 
 </body>

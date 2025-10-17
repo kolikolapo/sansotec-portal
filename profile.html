@@ -131,33 +131,6 @@ th { background:#f2f6ff; color:#222; }
 <script src="/js/server-storage-bridge.js"></script>
 
 <script>
-(async () => {
-  try {
-    const s = await ServerAuth.me(); // სერვერზე ქუქით ამოწმებს
-    if (!s?.authenticated) {
-      // სესია არაა — გაასუფთავე ადგილობრივი და login-ზე გადადი (არ გადაგისროლოს main-ზე)
-      try { localStorage.removeItem('currentUser'); } catch {}
-      window.location.replace('login.html?stay=1');
-      return;
-    }
-    // სესია არის — ლოკალურადაც დაიკეშოს user, რომ UI-მ იმუშავოს
-    try { localStorage.setItem('currentUser', JSON.stringify(s.user)); } catch {}
-  } catch {
-    try { localStorage.removeItem('currentUser'); } catch {}
-    window.location.replace('login.html?stay=1');
-  }
-})();
-</script>
-
-<script>
-async function logout() {
-  try { await window.ServerAuth?.logout?.(); } catch {}
-  try { localStorage.clear(); sessionStorage.clear(); } catch {}
-  window.location.href = 'login.html?stay=1'; // ვამბობთ: login-ზე დამტოვე, არ გადამაგდო main-ზე
-}
-</script>
-
-<script>
 /* ===== Guard: მხოლოდ ავტორიზებული ===== */
 (function guard(){
   const cu = JSON.parse(localStorage.getItem("currentUser")||"null");

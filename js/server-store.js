@@ -67,26 +67,10 @@
     return appUsers;
   }
 
-  // სერვერზე appUsers ჩაწერა — ცარიელის ჩაწერაც ნებადართულია
-async function saveAppUsers(appUsers) {
-  const body = {
-    appUsers: Array.isArray(appUsers) ? appUsers : [],
-    merge: true,
-    allowEmpty: true   // <<< მთავარი ხაზი: ნებადართულია [] ჩაწერაც
-  };
-
-  const r = await fetch(BASE + "/save-users", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify(body)
-  });
-
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok || j?.error) throw new Error(j?.error || "save failed");
-  return true;
-}
-
+  async function saveAppUsers(appUsers){
+    const both = await getBoth();
+    await saveBoth({ users: both.users, appUsers: Array.isArray(appUsers)?appUsers:[] });
+  }
 
   window.ServerStore = { getUsers, saveUsers, getAppUsers, saveAppUsers, getBoth, saveBoth };
 })();

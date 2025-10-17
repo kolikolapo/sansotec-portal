@@ -189,33 +189,6 @@ tr:hover { background:#fafafa; }
 <script src="/js/server-storage-bridge.js"></script>
 
 <script>
-(async () => {
-  try {
-    const s = await ServerAuth.me(); // სერვერზე ქუქით ამოწმებს
-    if (!s?.authenticated) {
-      // სესია არაა — გაასუფთავე ადგილობრივი და login-ზე გადადი (არ გადაგისროლოს main-ზე)
-      try { localStorage.removeItem('currentUser'); } catch {}
-      window.location.replace('login.html?stay=1');
-      return;
-    }
-    // სესია არის — ლოკალურადაც დაიკეშოს user, რომ UI-მ იმუშავოს
-    try { localStorage.setItem('currentUser', JSON.stringify(s.user)); } catch {}
-  } catch {
-    try { localStorage.removeItem('currentUser'); } catch {}
-    window.location.replace('login.html?stay=1');
-  }
-})();
-</script>
-
-<script>
-async function logout() {
-  try { await window.ServerAuth?.logout?.(); } catch {}
-  try { localStorage.clear(); sessionStorage.clear(); } catch {}
-  window.location.href = 'login.html?stay=1'; // ვამბობთ: login-ზე დამტოვე, არ გადამაგდო main-ზე
-}
-</script>
-
-<script>
 /* Role helpers */
 function getRole(){
   const cu = JSON.parse(localStorage.getItem("currentUser")||"null");
@@ -244,89 +217,32 @@ function updateUIByRole(){
 }
 updateUIByRole();
 
-// ---- Server save helpers (debounce) ----
-function debounce(fn, ms){
-  let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); };
-}
-
-async function saveUsersToServer(appUsersArray){
-  try {
-    if (window.ServerStore && typeof ServerStore.saveAppUsers === 'function') {
-      const ok = await ServerStore.saveAppUsers(appUsersArray); // workers.dev-ზე POST /save-users {appUsers, merge:true}
-      if (!ok) throw new Error('saveAppUsers returned !ok');
-    } else {
-      throw new Error('ServerStore.saveAppUsers missing'); // გვინდა რომ ყოველთვის worker-ით წავიდეს
-    }
-    // ლოკალურადაც შევინახოთ, რომ გვერდშივე UI სტაბილური იყოს
-    localStorage.setItem("appUsers", JSON.stringify(appUsersArray));
-    console.debug('appUsers synced to server:', appUsersArray.length);
-  } catch(e){
-    console.error('saveUsersToServer failed:', e);
-  }
-}
-
-const saveUsersToServerDebounced = debounce(saveUsersToServer, 700);
-
 /* Users + Logs */
-let appUsers = [];
+let appUsers = JSON.parse(localStorage.getItem("appUsers")||"[]");
 let appLogs = JSON.parse(localStorage.getItem("appLogs")||"[]");
-
-// --- Normalize helpers ---
-function normalizeUser(raw = {}) {
-  const u = { ...raw };
-
-  // Alias-ები ძველი/არათანაბარი სქემებიდან
-  if (!u.username) u.username = u.user || u.login || u.name || "";
-  if (!u.fullName) u.fullName = u.name || u.displayName || "";
-  if (!u.email)    u.email    = u.mail || u.emailAddress || "";
-  if (!u.role)     u.role     = u.type || u.level || "Viewer";
-  if (typeof u.disabled !== "boolean") u.disabled = !!u.isDisabled;
-
-  // პაროლი არასდროს იყოს undefined (UI-ში "•" სწორად დაიფაროს)
-  if (typeof u.password !== "string") u.password = "";
-
-  // საბოლოო სქემა
-  return {
-    fullName: String(u.fullName || "").trim(),
-    username: String(u.username || "").trim(),
-    email:    String(u.email || "").trim(),
-    role:     String(u.role || "Viewer"),
-    password: String(u.password || ""),
-    disabled: !!u.disabled,
-  };
-}
-
-function normalizeUsers(arr) {
-  if (!Array.isArray(arr)) return [];
-  // გაფილტრე “სრულიად ცარიელი”/კორუფტირებული ჩანაწერები
-  return arr.map(normalizeUser).filter(x => x.username || x.fullName);
-}
 
 function renderUsers(){
   const tbody = document.getElementById("userTable").tBodies[0];
-  tbody.innerHTML = "";
-  appUsers.forEach((u,i) => {
-    const tr = document.createElement("tr");
-    const maskedPass = (u.password && typeof u.password === 'string')
-      ? "•".repeat(u.password.length)
-      : "";
-    tr.innerHTML = `
-      <td>${u.fullName || ""}</td>
-      <td>${u.username || ""}</td>
-      <td>${u.email || ""}</td>
-      <td>${u.role || ""}</td>
+  tbody.innerHTML="";
+  appUsers.forEach((u,i)=>{
+    const tr=document.createElement("tr");
+    const maskedPass = "•".repeat(u.password.length);
+    tr.innerHTML=`
+      <td>${u.fullName||""}</td>
+      <td>${u.username}</td>
+      <td>${u.email||""}</td>
+      <td>${u.role}</td>
       <td>${maskedPass}</td>
-      <td>${u.disabled ? "გათიშული" : "აქტიური"}</td>
+      <td>${u.disabled?"გათიშული":"აქტიური"}</td>
       <td>
         <button class="btn-small btn-edit" onclick="editUser(${i})">✏️</button>
-        <button class="btn-small btn-toggle" onclick="toggleUser(${i})">${u.disabled ? "აქტივაცია" : "დეაქტივაცია"}</button>
+        <button class="btn-small btn-toggle" onclick="toggleUser(${i})">${u.disabled?"აქტივაცია":"დეაქტივაცია"}</button>
         <button class="btn-small btn-delete" onclick="deleteUser(${i})">🗑️</button>
       </td>
     `;
-    tbody.appendChild(tr);     // <— ეს იყო დაკარგული
-  });                          // <— და ეს დახურვაც
-  document.getElementById("userCount").textContent =
-    appUsers.filter(u => !u.disabled).length;
+    tbody.appendChild(tr);
+  });
+  document.getElementById("userCount").textContent=appUsers.filter(u=>!u.disabled).length;
 }
 
 function renderLogs(){
@@ -359,144 +275,49 @@ function editUser(i){
   document.getElementById("fullName").value=u.fullName||"";
   document.getElementById("username").value=u.username;
   document.getElementById("email").value=u.email||"";
-  document.getElementById("password").value = (typeof u.password === 'string' ? u.password : '');
+  document.getElementById("password").value=u.password; // სრული ტექსტი
   document.getElementById("role").value=u.role;
   document.getElementById("userModal").style.display="block";
 }
-async function saveUser(){
+function saveUser(){
   const fn=document.getElementById("fullName").value.trim();
   const u=document.getElementById("username").value.trim();
   const e=document.getElementById("email").value.trim();
   const p=document.getElementById("password").value.trim();
   const r=document.getElementById("role").value;
-
   if(!fn||!u||!e||!p){ alert("აუცილებელია ყველა ველი"); return; }
-
   const userData={fullName:fn,username:u,email:e,password:p,role:r,disabled:false};
-
-  // 1) ლოკალურად განახლება, რომ UI მაშინვე გამოცოცხლდეს
-  if (editingIndex!==null) appUsers[editingIndex]=userData;
-  else appUsers.push(userData);
-  localStorage.setItem("appUsers", JSON.stringify(appUsers));
-  renderUsers();
-
-  // 2) სერვერზე აუცილებლად ჩაწერა (IMPORTANT: await!)
-  try{
-    await saveUsersToServer(appUsers);     // ← ეს ნამდვილად დაელოდება ჩაწერას
-    window._appUsersJustSaved?.();         // მცირე პაუზა პოლისისთვის (ქვემოთ ნახავ)
-    // 3) ჩავიტვირთოთ ისევ სერვერიდან, რომ ყველგან ერთნაირი გახდეს
-    const fresh = await (window.ServerStore?.getAppUsers?.() ?? Promise.resolve([]));
-    appUsers = normalizeUsers(fresh);
-    localStorage.setItem("appUsers", JSON.stringify(appUsers));
-    renderUsers();
-  }catch(err){
-    console.error('saveUser sync failed:', err);
-  }
-
-  closeUserModal();
+  if(editingIndex!==null){ appUsers[editingIndex]=userData; }
+  else { appUsers.push(userData); }
+  localStorage.setItem("appUsers",JSON.stringify(appUsers));
+  closeUserModal(); renderUsers();
 }
-async function toggleUser(i){
-  // ლოკალური ცვლილება
-  appUsers[i].disabled = !appUsers[i].disabled;
-  localStorage.setItem("appUsers", JSON.stringify(appUsers));
+function toggleUser(i){
+  appUsers[i].disabled=!appUsers[i].disabled;
+  localStorage.setItem("appUsers",JSON.stringify(appUsers));
   renderUsers();
-
-  // სერვერზე ჩაწერა + ხელახლა წამოღება
-  try{
-    await saveUsersToServer(appUsers);
-    window._appUsersJustSaved?.();
-    const fresh = await (window.ServerStore?.getAppUsers?.() ?? Promise.resolve([]));
-    appUsers = normalizeUsers(fresh);
-    localStorage.setItem("appUsers", JSON.stringify(appUsers));
+}
+function deleteUser(i){
+  if(confirm("წაშლა?")){
+    appUsers.splice(i,1);
+    localStorage.setItem("appUsers",JSON.stringify(appUsers));
     renderUsers();
-  }catch(e){
-    console.error('toggle sync failed:', e);
   }
 }
 
-async function deleteUser(i){
-  if(!confirm("წაშლა?")) return;
+renderUsers(); renderLogs();
 
-  // ლოკალური ცვლილება
-  appUsers.splice(i,1);
-  localStorage.setItem("appUsers", JSON.stringify(appUsers));
-  renderUsers();
-
-  // სერვერზე ჩაწერა + ხელახლა წამოღება
-  try{
-    await saveUsersToServer(appUsers);
-    window._appUsersJustSaved?.();
-    const fresh = await (window.ServerStore?.getAppUsers?.() ?? Promise.resolve([]));
-    appUsers = normalizeUsers(fresh);
-    localStorage.setItem("appUsers", JSON.stringify(appUsers));
-    renderUsers();
-  }catch(e){
-    console.error('delete sync failed:', e);
+/* Logout with logging */
+function logout(){
+  const cu = JSON.parse(localStorage.getItem("currentUser"));
+  if(cu){
+    const logs=JSON.parse(localStorage.getItem("appLogs")||"[]");
+    logs.unshift({ user:cu.username, action:"Logout", time:new Date().toLocaleString("ka-GE") });
+    localStorage.setItem("appLogs",JSON.stringify(logs));
   }
+  localStorage.removeItem("currentUser");
+  window.location.href="login.html";
 }
-(async function initUsersFromServer(){
-  try {
-    // წავიკითხოთ ორივე, მაგრამ არჩევის წესს აქ ვაწესებთ
-    const appUsersSrv = await (window.ServerStore?.getAppUsers?.() ?? Promise.resolve(undefined));
-    const usersSrv    = await (window.ServerStore?.getUsers?.() ?? Promise.resolve(undefined));
-
-    // წესი:
-    // 1) თუ appUsersSrv არის მასივი (თუნდაც ცარიელი []) → ვიყენებთ ზუსტად მაგას
-    // 2) თუ appUsersSrv საერთოდ არაა და usersSrv არის მასივი → ერთხელ ვიყენებთ usersSrv-ს
-    let fromServer;
-    if (Array.isArray(appUsersSrv)) {
-      fromServer = appUsersSrv;
-    } else if (Array.isArray(usersSrv)) {
-      fromServer = usersSrv;
-    } else {
-      fromServer = [];
-    }
-
-    // ნორმალიზაცია, ლოკალშიც ჩაწერა და რენდერი
-    fromServer = normalizeUsers(fromServer);
-    appUsers = fromServer;
-    localStorage.setItem("appUsers", JSON.stringify(fromServer));
-    renderUsers();
-    renderLogs();
-  } catch (e) {
-    console.error('Failed to load users from server:', e);
-    try { appUsers = normalizeUsers(JSON.parse(localStorage.getItem("appUsers")||"[]")); } catch { appUsers = []; }
-    renderUsers();
-    renderLogs();
-  }
-})();
-
-</script>
-
-<script>
-// --- Cross-tab + Periodic pull ---
-(function autoSync(){
-  // იგივე ბრაუზერში სხვა ტაბმა რამე რომ გააკეთოს
-  window.addEventListener('storage', (e) => {
-    if (e.key === 'appUsers' && typeof e.newValue === 'string') {
-      try { appUsers = normalizeUsers(JSON.parse(e.newValue)); renderUsers(); } catch {}
-    }
-  });
-
-  // პერიოდული პული (5 წმ)
-  let pauseUntil = 0; // ლოკალური ჩაწერის მერე 2 წმ არ ვქაჩავთ, რომ bouncing არ მოხდეს
-  async function tick(){
-    if (Date.now() < pauseUntil) return;
-    try{
-      const fresh = await (window.ServerStore?.getAppUsers?.() ?? Promise.resolve([]));
-      const norm  = normalizeUsers(fresh);
-      if (JSON.stringify(norm) !== JSON.stringify(appUsers)) {
-        appUsers = norm;
-        localStorage.setItem("appUsers", JSON.stringify(appUsers));
-        renderUsers();
-      }
-    }catch(e){ /* ჩუმად */ }
-  }
-  setInterval(tick, 5000);
-
-  // ეს ფუნქცია უბრალოდ პაუზას აყენებს პულზე (save/toggle/delete მერე გამოვიძახებთ)
-  window._appUsersJustSaved = function(){ pauseUntil = Date.now() + 2000; };
-})();
 </script>
 
 </body>
