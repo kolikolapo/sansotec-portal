@@ -363,38 +363,77 @@ function editUser(i){
   document.getElementById("role").value=u.role;
   document.getElementById("userModal").style.display="block";
 }
-function saveUser(){
+async function saveUser(){
   const fn=document.getElementById("fullName").value.trim();
   const u=document.getElementById("username").value.trim();
   const e=document.getElementById("email").value.trim();
   const p=document.getElementById("password").value.trim();
   const r=document.getElementById("role").value;
+
   if(!fn||!u||!e||!p){ alert("აუცილებელია ყველა ველი"); return; }
+
   const userData={fullName:fn,username:u,email:e,password:p,role:r,disabled:false};
-  if(editingIndex!==null){ appUsers[editingIndex]=userData; }
-  else { appUsers.push(userData); }
-  localStorage.setItem("appUsers", JSON.stringify(appUsers));
-  saveUsersToServerDebounced(appUsers);
-  closeUserModal(); renderUsers();
 
-}
-function toggleUser(i){
-  appUsers[i].disabled=!appUsers[i].disabled;
+  // 1) ლოკალურად განახლება, რომ UI მაშინვე გამოცოცხლდეს
+  if (editingIndex!==null) appUsers[editingIndex]=userData;
+  else appUsers.push(userData);
   localStorage.setItem("appUsers", JSON.stringify(appUsers));
-  saveUsersToServerDebounced(appUsers);
   renderUsers();
 
+  // 2) სერვერზე აუცილებლად ჩაწერა (IMPORTANT: await!)
+  try{
+    await saveUsersToServer(appUsers);     // ← ეს ნამდვილად დაელოდება ჩაწერას
+    window._appUsersJustSaved?.();         // მცირე პაუზა პოლისისთვის (ქვემოთ ნახავ)
+    // 3) ჩავიტვირთოთ ისევ სერვერიდან, რომ ყველგან ერთნაირი გახდეს
+    const fresh = await (window.ServerStore?.getAppUsers?.() ?? Promise.resolve([]));
+    appUsers = normalizeUsers(fresh);
+    localStorage.setItem("appUsers", JSON.stringify(appUsers));
+    renderUsers();
+  }catch(err){
+    console.error('saveUser sync failed:', err);
+  }
+
+  closeUserModal();
 }
-function deleteUser(i){
-  if(confirm("წაშლა?")){
-    appUsers.splice(i,1);
+async function toggleUser(i){
+  // ლოკალური ცვლილება
+  appUsers[i].disabled = !appUsers[i].disabled;
   localStorage.setItem("appUsers", JSON.stringify(appUsers));
-  saveUsersToServerDebounced(appUsers);
   renderUsers();
 
+  // სერვერზე ჩაწერა + ხელახლა წამოღება
+  try{
+    await saveUsersToServer(appUsers);
+    window._appUsersJustSaved?.();
+    const fresh = await (window.ServerStore?.getAppUsers?.() ?? Promise.resolve([]));
+    appUsers = normalizeUsers(fresh);
+    localStorage.setItem("appUsers", JSON.stringify(appUsers));
+    renderUsers();
+  }catch(e){
+    console.error('toggle sync failed:', e);
   }
 }
 
+async function deleteUser(i){
+  if(!confirm("წაშლა?")) return;
+
+  // ლოკალური ცვლილება
+  appUsers.splice(i,1);
+  localStorage.setItem("appUsers", JSON.stringify(appUsers));
+  renderUsers();
+
+  // სერვერზე ჩაწერა + ხელახლა წამოღება
+  try{
+    await saveUsersToServer(appUsers);
+    window._appUsersJustSaved?.();
+    const fresh = await (window.ServerStore?.getAppUsers?.() ?? Promise.resolve([]));
+    appUsers = normalizeUsers(fresh);
+    localStorage.setItem("appUsers", JSON.stringify(appUsers));
+    renderUsers();
+  }catch(e){
+    console.error('delete sync failed:', e);
+  }
+}
 (async function initUsersFromServer(){
   try {
     const appUsersSrv = await (window.ServerStore?.getAppUsers?.() ?? Promise.resolve([]));
@@ -423,6 +462,37 @@ function deleteUser(i){
   }
 })();
 
+</script>
+
+<script>
+// --- Cross-tab + Periodic pull ---
+(function autoSync(){
+  // იგივე ბრაუზერში სხვა ტაბმა რამე რომ გააკეთოს
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'appUsers' && typeof e.newValue === 'string') {
+      try { appUsers = normalizeUsers(JSON.parse(e.newValue)); renderUsers(); } catch {}
+    }
+  });
+
+  // პერიოდული პული (5 წმ)
+  let pauseUntil = 0; // ლოკალური ჩაწერის მერე 2 წმ არ ვქაჩავთ, რომ bouncing არ მოხდეს
+  async function tick(){
+    if (Date.now() < pauseUntil) return;
+    try{
+      const fresh = await (window.ServerStore?.getAppUsers?.() ?? Promise.resolve([]));
+      const norm  = normalizeUsers(fresh);
+      if (JSON.stringify(norm) !== JSON.stringify(appUsers)) {
+        appUsers = norm;
+        localStorage.setItem("appUsers", JSON.stringify(appUsers));
+        renderUsers();
+      }
+    }catch(e){ /* ჩუმად */ }
+  }
+  setInterval(tick, 5000);
+
+  // ეს ფუნქცია უბრალოდ პაუზას აყენებს პულზე (save/toggle/delete მერე გამოვიძახებთ)
+  window._appUsersJustSaved = function(){ pauseUntil = Date.now() + 2000; };
+})();
 </script>
 
 </body>
