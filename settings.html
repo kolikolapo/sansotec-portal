@@ -271,30 +271,62 @@ const saveUsersToServerDebounced = debounce(saveUsersToServer, 700);
 let appUsers = [];
 let appLogs = JSON.parse(localStorage.getItem("appLogs")||"[]");
 
+// --- Normalize helpers ---
+function normalizeUser(raw = {}) {
+  const u = { ...raw };
+
+  // Alias-ები ძველი/არათანაბარი სქემებიდან
+  if (!u.username) u.username = u.user || u.login || u.name || "";
+  if (!u.fullName) u.fullName = u.name || u.displayName || "";
+  if (!u.email)    u.email    = u.mail || u.emailAddress || "";
+  if (!u.role)     u.role     = u.type || u.level || "Viewer";
+  if (typeof u.disabled !== "boolean") u.disabled = !!u.isDisabled;
+
+  // პაროლი არასდროს იყოს undefined (UI-ში "•" სწორად დაიფაროს)
+  if (typeof u.password !== "string") u.password = "";
+
+  // საბოლოო სქემა
+  return {
+    fullName: String(u.fullName || "").trim(),
+    username: String(u.username || "").trim(),
+    email:    String(u.email || "").trim(),
+    role:     String(u.role || "Viewer"),
+    password: String(u.password || ""),
+    disabled: !!u.disabled,
+  };
+}
+
+function normalizeUsers(arr) {
+  if (!Array.isArray(arr)) return [];
+  // გაფილტრე “სრულიად ცარიელი”/კორუფტირებული ჩანაწერები
+  return arr.map(normalizeUser).filter(x => x.username || x.fullName);
+}
+
 function renderUsers(){
   const tbody = document.getElementById("userTable").tBodies[0];
-  tbody.innerHTML="";
-  appUsers.forEach((u,i)=>{
-    const tr=document.createElement("tr");
+  tbody.innerHTML = "";
+  appUsers.forEach((u,i) => {
+    const tr = document.createElement("tr");
     const maskedPass = (u.password && typeof u.password === 'string')
-  ? "•".repeat(u.password.length)
-  : "";
-    tr.innerHTML=`
-      <td>${u.fullName||""}</td>
-      <td>${u.username}</td>
-      <td>${u.email||""}</td>
-      <td>${u.role}</td>
+      ? "•".repeat(u.password.length)
+      : "";
+    tr.innerHTML = `
+      <td>${u.fullName || ""}</td>
+      <td>${u.username || ""}</td>
+      <td>${u.email || ""}</td>
+      <td>${u.role || ""}</td>
       <td>${maskedPass}</td>
-      <td>${u.disabled?"გათიშული":"აქტიური"}</td>
+      <td>${u.disabled ? "გათიშული" : "აქტიური"}</td>
       <td>
         <button class="btn-small btn-edit" onclick="editUser(${i})">✏️</button>
-        <button class="btn-small btn-toggle" onclick="toggleUser(${i})">${u.disabled?"აქტივაცია":"დეაქტივაცია"}</button>
+        <button class="btn-small btn-toggle" onclick="toggleUser(${i})">${u.disabled ? "აქტივაცია" : "დეაქტივაცია"}</button>
         <button class="btn-small btn-delete" onclick="deleteUser(${i})">🗑️</button>
       </td>
     `;
-    tbody.appendChild(tr);
-  });
-  document.getElementById("userCount").textContent=appUsers.filter(u=>!u.disabled).length;
+    tbody.appendChild(tr);     // <— ეს იყო დაკარგული
+  });                          // <— და ეს დახურვაც
+  document.getElementById("userCount").textContent =
+    appUsers.filter(u => !u.disabled).length;
 }
 
 function renderLogs(){
@@ -368,13 +400,24 @@ function deleteUser(i){
     const appUsersSrv = await (window.ServerStore?.getAppUsers?.() ?? Promise.resolve([]));
     const usersSrv    = await (window.ServerStore?.getUsers?.() ?? Promise.resolve([]));
 
-    appUsers = (Array.isArray(appUsersSrv) && appUsersSrv.length) ? appUsersSrv : usersSrv;
+    // აირჩიე appUsers, თუ ცარიელია — usersSrv (fallback)
+    let fromServer = (Array.isArray(appUsersSrv) && appUsersSrv.length) ? appUsersSrv : usersSrv;
+
+    // ნორმალიზაცია
+    fromServer = normalizeUsers(fromServer);
+
+    // ✅ დააყენე ლოკალურ ცვლადზე
+    appUsers = fromServer;
+    localStorage.setItem("appUsers", JSON.stringify(fromServer));
+
+    // ერთჯერადი მიგრაცია სერვერზე
+    try { await window.ServerStore?.saveAppUsers?.(fromServer); } catch(e) { console.warn('saveAppUsers migrate failed:', e); }
 
     renderUsers();
     renderLogs();
   } catch (e) {
     console.error('Failed to load users from server:', e);
-    try { appUsers = JSON.parse(localStorage.getItem("appUsers")||"[]"); } catch {}
+    try { appUsers = normalizeUsers(JSON.parse(localStorage.getItem("appUsers")||"[]")); } catch { appUsers = []; }
     renderUsers();
     renderLogs();
   }
