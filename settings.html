@@ -436,22 +436,26 @@ async function deleteUser(i){
 }
 (async function initUsersFromServer(){
   try {
-    const appUsersSrv = await (window.ServerStore?.getAppUsers?.() ?? Promise.resolve([]));
-    const usersSrv    = await (window.ServerStore?.getUsers?.() ?? Promise.resolve([]));
+    // წავიკითხოთ ორივე, მაგრამ არჩევის წესს აქ ვაწესებთ
+    const appUsersSrv = await (window.ServerStore?.getAppUsers?.() ?? Promise.resolve(undefined));
+    const usersSrv    = await (window.ServerStore?.getUsers?.() ?? Promise.resolve(undefined));
 
-    // აირჩიე appUsers, თუ ცარიელია — usersSrv (fallback)
-    let fromServer = (Array.isArray(appUsersSrv) && appUsersSrv.length) ? appUsersSrv : usersSrv;
+    // წესი:
+    // 1) თუ appUsersSrv არის მასივი (თუნდაც ცარიელი []) → ვიყენებთ ზუსტად მაგას
+    // 2) თუ appUsersSrv საერთოდ არაა და usersSrv არის მასივი → ერთხელ ვიყენებთ usersSrv-ს
+    let fromServer;
+    if (Array.isArray(appUsersSrv)) {
+      fromServer = appUsersSrv;
+    } else if (Array.isArray(usersSrv)) {
+      fromServer = usersSrv;
+    } else {
+      fromServer = [];
+    }
 
-    // ნორმალიზაცია
+    // ნორმალიზაცია, ლოკალშიც ჩაწერა და რენდერი
     fromServer = normalizeUsers(fromServer);
-
-    // ✅ დააყენე ლოკალურ ცვლადზე
     appUsers = fromServer;
     localStorage.setItem("appUsers", JSON.stringify(fromServer));
-
-    // ერთჯერადი მიგრაცია სერვერზე
-    try { await window.ServerStore?.saveAppUsers?.(fromServer); } catch(e) { console.warn('saveAppUsers migrate failed:', e); }
-
     renderUsers();
     renderLogs();
   } catch (e) {
