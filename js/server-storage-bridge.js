@@ -287,26 +287,20 @@ window.ServerStore.getAppUsers = async function () {
   return Array.isArray(j?.appUsers) ? j.appUsers : [];
 };
 
-window.ServerStore.saveUsers = async function (usersArray) {
-  const r = await fetch(`${WORKER_UPLOAD_BASE}/save-users`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      users: Array.isArray(usersArray) ? usersArray : [],
-      merge: true
-    })
-  });
-  return r.ok;
-};
-
 window.ServerStore.saveAppUsers = async function (appUsersArray) {
+  const payload = {
+    appUsers: Array.isArray(appUsersArray) ? appUsersArray : [],
+    merge: true
+  };
+  // თუ საერთოდ აღარ გვყავს აპ-იუზერები — ვეუბნებით worker-ს, რომ ცარიელის შენახვაც ნებადართულია
+  if (Array.isArray(appUsersArray) && appUsersArray.length === 0) {
+    payload.allowEmpty = true;
+  }
+
   const r = await fetch(`${WORKER_UPLOAD_BASE}/save-users`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      appUsers: Array.isArray(appUsersArray) ? appUsersArray : [],
-      merge: true
-    })
+    body: JSON.stringify(payload)
   });
   return r.ok;
 };
