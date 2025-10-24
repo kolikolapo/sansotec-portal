@@ -1,0 +1,79 @@
+:root {
+  --bg: #282828;
+  --text: #ffffff;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Myriad Pro", system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+}
+
+.wrap {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.card {
+  background: #ffffff;
+  color: #000000;
+  width: 100%;
+  max-width: 420px;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  padding: 24px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #555;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.form {
+  display: grid;
+  gap: 8px;
+}
+
+label {
+  font-size: 13px;
+  color: #333;
+}
+
+input {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+button {
+  margin-top: 8px;
+  background: #000000;
+  color: #ffffff;
+  border: 0;
+  border-radius: 14px;
+  padding: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.err {
+  color: #b00020;
+  font-size: 12px;
+  margin-top: 4px;
+}
