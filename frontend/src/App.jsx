@@ -5,15 +5,35 @@ function App() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [info, setInfo] = useState('')
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setInfo('')
+
     if (!username || !password) {
       setError('გთხოვთ შეიყვანოთ იუზერნეიმი და პაროლი')
       return
     }
-    alert(`(საწყის ვერსიაში) შეყვანილია:\nიუზერნეიმი: ${username}\ნპაროლი: ${'*'.repeat(password.length)}`)
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      })
+      const data = await res.json()
+      if (!res.ok || !data.ok) {
+        throw new Error(data.message || 'ავტორიზაციის შეცდომა')
+      }
+
+      // დროებით ინდიაკცია, რომ იმუშავა:
+      localStorage.setItem('role', data.role)
+      setInfo(`შესვლა წარმატებულია. როლი: ${data.role}`)
+    } catch (err) {
+      setError(err.message)
+    }
   }
 
   return (
@@ -30,7 +50,7 @@ function App() {
             onChange={(e)=>setUsername(e.target.value)}
           />
 
-        <label>პაროლი</label>
+          <label>პაროლი</label>
           <input
             type="password"
             placeholder="••••••"
@@ -39,6 +59,7 @@ function App() {
           />
 
           {error && <div className="err">{error}</div>}
+          {info && <div style={{ color: 'green', fontSize: 12, marginTop: 4 }}>{info}</div>}
 
           <button type="submit">შესვლა</button>
         </form>
