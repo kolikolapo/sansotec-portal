@@ -9,8 +9,9 @@ export default function Admin(){
   const [list, setList] = useState([])
   const [query, setQuery] = useState('') // ძიება ID/დასახელებით
   const [showModal, setShowModal] = useState(false)
+  const [isEdit, setIsEdit] = useState(false)       // ახალი: რედაქტირებისთვის
 
-  // ფორმის ველები (პაროლის გარდა ყველაფერი ჩანს ცხრილში)
+  // დამატების ფორმა
   const [form, setForm] = useState({
     id: '',
     name: '',
@@ -21,7 +22,20 @@ export default function Admin(){
     contact_person: '',
     device: '',
     device_sn: '',
-    password: '', // ცხრილში არ ვაჩვენებთ
+    password: '', // ცხრილში არ ჩანს
+  })
+
+  // რედაქტირების ფორმა
+  const [editForm, setEditForm] = useState({
+    id: '',
+    name: '',
+    ident_code: '',
+    salon_name: '',
+    address: '',
+    phone: '',
+    contact_person: '',
+    device: '',
+    device_sn: '',
   })
 
   // მარტივი დაცვა: admin role
@@ -41,7 +55,6 @@ export default function Admin(){
         if (Array.isArray(arr)) setList(arr)
       } catch {}
     } else {
-      // თუ არაფერია, ჩავაგდოთ 1 მაგალითი
       const sample = [
         {
           id: '1001',
@@ -71,7 +84,8 @@ export default function Admin(){
     )
   }, [list, query])
 
-  function openModal(){
+  function openCreateModal(){
+    setIsEdit(false)
     setForm({
       id: '',
       name: '',
@@ -87,9 +101,24 @@ export default function Admin(){
     setShowModal(true)
   }
 
+  function startEdit(c){
+    setIsEdit(true)
+    setEditForm({
+      id: c.id,
+      name: c.name || '',
+      ident_code: c.ident_code || '',
+      salon_name: c.salon_name || '',
+      address: c.address || '',
+      phone: c.phone || '',
+      contact_person: c.contact_person || '',
+      device: c.device || '',
+      device_sn: c.device_sn || '',
+    })
+    setShowModal(true)
+  }
+
   function saveCustomer(e){
     e.preventDefault()
-    // მინიმალური ვალიდაცია
     if(!form.id || !/^\d+$/.test(form.id)){
       alert('ID უნდა იყოს მხოლოდ ციფრები'); return
     }
@@ -97,7 +126,6 @@ export default function Admin(){
     if(!form.ident_code){ alert('საიდენტიფიკაციო კოდი სავალდებულოა'); return }
     if(!form.password){ alert('პაროლი სავალდებულოა'); return }
 
-    // დუბლირებაზე მარტივი შემოწმება (ID ან ident_code)
     if(list.some(x => x.id === form.id)){
       alert('ასეთი ID უკვე არსებობს'); return
     }
@@ -115,14 +143,51 @@ export default function Admin(){
       contact_person: form.contact_person,
       device: form.device,
       device_sn: form.device_sn,
-      // პაროლს ცხრილში არ ვინახავთ, მარტო დროებით localStorage-ში
-      _customer_password_plain: form.password, // დროებით! (ბექენდზე გადატანისას მოვხსნით)
+      _customer_password_plain: form.password, // დროებით მხოლოდ localStorage-ში
       _created_at: Date.now(),
     }
     const next = [...list, toSave]
     setList(next)
     localStorage.setItem(LS_KEY, JSON.stringify(next))
     setShowModal(false)
+  }
+
+  function updateCustomer(e){
+    e.preventDefault()
+    // ვალიდაცია
+    if(!editForm.id || !/^\d+$/.test(editForm.id)){
+      alert('ID უნდა იყოს მხოლოდ ციფრები'); return
+    }
+    if(!editForm.name){ alert('დასახელება სავალდებულოა'); return }
+    if(!editForm.ident_code){ alert('საიდენტიფიკაციო კოდი სავალდებულოა'); return }
+
+    // იპოვე ძველი ჩანაწერი
+    const idx = list.findIndex(x => x.id === editForm.id)
+    if(idx === -1){
+      alert('ჩანაწერი ვერ მოიძებნა'); return
+    }
+
+    // სანქცია: ident_code დუბლირება სხვა ჩანაწერთან
+    const dup = list.find(x => x.ident_code === editForm.ident_code && x.id !== editForm.id)
+    if(dup){
+      alert('ასეთი საიდენტიფიკაციო უკვე არსებობს სხვა ჩანაწერზე'); return
+    }
+
+    const updated = { ...list[idx], ...editForm, _updated_at: Date.now() }
+    const next = [...list]
+    next[idx] = updated
+
+    setList(next)
+    localStorage.setItem(LS_KEY, JSON.stringify(next))
+    setShowModal(false)
+    setIsEdit(false)
+  }
+
+  function deleteCustomer(c){
+    if(!confirm(`წავშალოთ კლიენტი: ${c.name} (ID: ${c.id})?`)) return
+    const next = list.filter(x => x.id !== c.id)
+    setList(next)
+    localStorage.setItem(LS_KEY, JSON.stringify(next))
   }
 
   function onLogout(){
@@ -133,7 +198,10 @@ export default function Admin(){
   return (
     <div className="admin-wrap">
       <header className="admin-header">
-        <div className="brand">Sanso Technical Department</div>
+        <div className="brand">
+          <img src="/logo.png" alt="Sanso" style={{ height: 28, marginRight: 10, verticalAlign: 'middle' }}/>
+          <span>Sanso Technical Department</span>
+        </div>
         <div className="spacer" />
         <button className="logout" onClick={onLogout}>გასვლა</button>
       </header>
@@ -154,7 +222,7 @@ export default function Admin(){
           <h1>კლიენტები</h1>
 
           <div style={{display:'flex', gap:12, alignItems:'center', marginBottom:12}}>
-            <button className="logout" onClick={openModal}>კლიენტის დამატება</button>
+            <button className="logout" onClick={openCreateModal}>კლიენტის დამატება</button>
             <input
               placeholder="ძიება (ID ან დასახელება)"
               value={query}
@@ -193,11 +261,9 @@ export default function Admin(){
                     <Td>{c.contact_person}</Td>
                     <Td>{c.device}</Td>
                     <Td>{c.device_sn}</Td>
-                    <Td>
-                      <button
-                        className="logout"
-                        onClick={()=>alert('რედაქტირება/წაშლა დავამატოთ შემდეგ ნაბიჯში')}
-                      >მოქმედება</button>
+                    <Td style={{display:'flex', gap:6}}>
+                      <button className="logout" onClick={()=>startEdit(c)}>რედაქტირება</button>
+                      <button className="logout" onClick={()=>deleteCustomer(c)}>წაშლა</button>
                     </Td>
                   </tr>
                 ))}
@@ -207,46 +273,110 @@ export default function Admin(){
         </main>
       </div>
 
-      {/* დამატების მოდალი */}
+      {/* დამატების/რედაქტირების მოდალი */}
       {showModal && (
         <div style={modalBackdrop}>
           <div style={modalCard}>
-            <h3 style={{marginTop:0}}>კლიენტის დამატება</h3>
-            <form onSubmit={saveCustomer} style={{display:'grid', gap:8, maxHeight:'70vh', overflow:'auto'}}>
+            <h3 style={{marginTop:0}}>
+              {isEdit ? 'კლიენტის რედაქტირება' : 'კლიენტის დამატება'}
+            </h3>
+
+            <form onSubmit={isEdit ? updateCustomer : saveCustomer} style={{display:'grid', gap:8, maxHeight:'70vh', overflow:'auto'}}>
               <Row label="ID (მხოლოდ ციფრები)">
-                <input value={form.id} onChange={e=>setForm({...form, id:e.target.value})} />
+                <input
+                  value={isEdit ? editForm.id : form.id}
+                  onChange={e=> isEdit
+                    ? setEditForm({...editForm, id:e.target.value})
+                    : setForm({...form, id:e.target.value})
+                  }
+                  disabled={isEdit} /* რედაქტირებისას ID არ შევცვალოთ */
+                />
               </Row>
               <Row label="დასახელება">
-                <input value={form.name} onChange={e=>setForm({...form, name:e.target.value})} />
+                <input
+                  value={isEdit ? editForm.name : form.name}
+                  onChange={e=> isEdit
+                    ? setEditForm({...editForm, name:e.target.value})
+                    : setForm({...form, name:e.target.value})
+                  }
+                />
               </Row>
               <Row label="საიდენტიფიკაციო კოდი (კლიენტის username)">
-                <input value={form.ident_code} onChange={e=>setForm({...form, ident_code:e.target.value})} />
+                <input
+                  value={isEdit ? editForm.ident_code : form.ident_code}
+                  onChange={e=> isEdit
+                    ? setEditForm({...editForm, ident_code:e.target.value})
+                    : setForm({...form, ident_code:e.target.value})
+                  }
+                />
               </Row>
               <Row label="სალონის/კლინიკის დასახელება">
-                <input value={form.salon_name} onChange={e=>setForm({...form, salon_name:e.target.value})} />
+                <input
+                  value={isEdit ? editForm.salon_name : form.salon_name}
+                  onChange={e=> isEdit
+                    ? setEditForm({...editForm, salon_name:e.target.value})
+                    : setForm({...form, salon_name:e.target.value})
+                  }
+                />
               </Row>
               <Row label="მისამართი">
-                <input value={form.address} onChange={e=>setForm({...form, address:e.target.value})} />
+                <input
+                  value={isEdit ? editForm.address : form.address}
+                  onChange={e=> isEdit
+                    ? setEditForm({...editForm, address:e.target.value})
+                    : setForm({...form, address:e.target.value})
+                  }
+                />
               </Row>
               <Row label="ტელეფონი">
-                <input value={form.phone} onChange={e=>setForm({...form, phone:e.target.value})} />
+                <input
+                  value={isEdit ? editForm.phone : form.phone}
+                  onChange={e=> isEdit
+                    ? setEditForm({...editForm, phone:e.target.value})
+                    : setForm({...form, phone:e.target.value})
+                  }
+                />
               </Row>
               <Row label="საკონტაქტო პირი">
-                <input value={form.contact_person} onChange={e=>setForm({...form, contact_person:e.target.value})} />
+                <input
+                  value={isEdit ? editForm.contact_person : form.contact_person}
+                  onChange={e=> isEdit
+                    ? setEditForm({...editForm, contact_person:e.target.value})
+                    : setForm({...form, contact_person:e.target.value})
+                  }
+                />
               </Row>
               <Row label="აპარატი">
-                <input value={form.device} onChange={e=>setForm({...form, device:e.target.value})} />
+                <input
+                  value={isEdit ? editForm.device : form.device}
+                  onChange={e=> isEdit
+                    ? setEditForm({...editForm, device:e.target.value})
+                    : setForm({...form, device:e.target.value})
+                  }
+                />
               </Row>
               <Row label="აპარატის სერიული ნომერი">
-                <input value={form.device_sn} onChange={e=>setForm({...form, device_sn:e.target.value})} />
-              </Row>
-              <Row label="პაროლი (კლიენტის შესასვლელად)">
-                <input type="password" value={form.password} onChange={e=>setForm({...form, password:e.target.value})} />
+                <input
+                  value={isEdit ? editForm.device_sn : form.device_sn}
+                  onChange={e=> isEdit
+                    ? setEditForm({...editForm, device_sn:e.target.value})
+                    : setForm({...form, device_sn:e.target.value})
+                  }
+                />
               </Row>
 
+              {/* პაროლი მხოლოდ დამატებისასაა საჭირო; რედაქტირებაზე არ ვაჩვენებთ */}
+              {!isEdit && (
+                <Row label="პაროლი (კლიენტის შესასვლელად)">
+                  <input type="password" value={form.password} onChange={e=>setForm({...form, password:e.target.value})} />
+                </Row>
+              )}
+
               <div style={{display:'flex', gap:8, marginTop:8}}>
-                <button className="logout" type="submit">დამატება</button>
-                <button className="logout" type="button" onClick={()=>setShowModal(false)}>დახურვა</button>
+                <button className="logout" type="submit">{isEdit ? 'შენახვა' : 'დამატება'}</button>
+                <button className="logout" type="button" onClick={()=>{
+                  setShowModal(false); setIsEdit(false)
+                }}>დახურვა</button>
               </div>
             </form>
           </div>
