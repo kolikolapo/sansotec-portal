@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import './App.css'
 
 function App() {
@@ -6,6 +7,7 @@ function App() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
+  const nav = useNavigate()
 
   const onSubmit = async (e) => {
     e.preventDefault()
@@ -28,9 +30,11 @@ function App() {
         throw new Error(data.message || 'ავტორიზაციის შეცდომა')
       }
 
-      // დროებით ინდიაკცია, რომ იმუშავა:
       localStorage.setItem('role', data.role)
       setInfo(`შესვლა წარმატებულია. როლი: ${data.role}`)
+
+      // ავტორიდირექტი /admin-ზე
+      nav('/admin', { replace: true })
     } catch (err) {
       setError(err.message)
     }
