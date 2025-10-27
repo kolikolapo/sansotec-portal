@@ -170,13 +170,16 @@ export default function Admin(){
       <div className="admin-body">
         <aside className="side">
           <div className="side-title">მენიუ</div>
-          <ul>
-            <li className="active">მთავარი</li>
-            <li>სტატისტიკა</li>
-            <li>პარამეტრები</li>
-            <li>Audit log</li>
-            <li onClick={onLogout}>გასვლა</li>
-          </ul>
+            <ul>
+              <li className="active">მთავარი</li>
+              <li>სტატისტიკა</li>
+              <li>
+                <a href="/settings/users" style={{color:'#fff', textDecoration:'none'}}>პარამეტრები → Users</a>
+              </li>
+              <li>Audit log</li>
+              <li onClick={onLogout}>გასვლა</li>
+            </ul>
+
         </aside>
 
       <main className="content">

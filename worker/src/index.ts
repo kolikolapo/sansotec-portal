@@ -9,9 +9,22 @@ type Bindings = {
 
 const app = new Hono<{ Bindings: Bindings }>()
 
+const ALLOWED = new Set([
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:8787',
+  'http://127.0.0.1:8787',
+  'https://www.sansotec.ge',
+  'https://sansotec.ge',
+  'https://sansotec-portal.pages.dev',
+])
+
 app.use('*', cors({
-  origin: '*',
-  credentials: true,
+  origin: (origin) => {
+    if (!origin) return '*'                 // მაგალითად curl/პირდაპირი გახსნა
+    return ALLOWED.has(origin) ? origin : 'https://www.sansotec.ge'
+  },
+  credentials: false,                       // ქუქებს არ ვიყენებთ, ამიტომ false.Eეადვილებს CORS-ს
   allowHeaders: ['Content-Type'],
   allowMethods: ['GET','POST','PUT','DELETE','OPTIONS'],
 }))
@@ -77,6 +90,122 @@ app.get('/api/customers', async (c) => {
     return c.json({ ok: false, message: e?.message || 'DB error' }, 500)
   }
 })
+
+/** ─────────────────────────────────────────────────────────
+ *  AppUsers (მხოლოდ admin–ისთვის UI, მაგრამ აქ auth-ს ჯერჯერობით არ ვამოწმებთ)
+ *  GET    /api/appusers
+ *  POST   /api/appusers
+ *  PUT    /api/appusers/:id
+ *  DELETE /api/appusers/:id
+ *  ჩამოსათვლელად ვაბრუნებთ მხოლოდ უსაფრთხო ველებს (არასდროს password_hash)
+ *  ───────────────────────────────────────────────────────── */
+
+app.get('/api/appusers', async (c) => {
+  try {
+    const { results } = await c.env.DB.prepare(
+      `SELECT id, username, role, customer_id, created_at
+       FROM appusers
+       ORDER BY datetime(created_at) DESC, id DESC`
+    ).all();
+    return c.json({ ok: true, items: results ?? [] });
+  } catch (e: any) {
+    return c.json({ ok:false, message: e?.message || 'DB error' }, 500);
+  }
+});
+
+app.post('/api/appusers', async (c) => {
+  try {
+    const body = await c.req.json().catch(()=>null) as any;
+    if (!body) return c.json({ ok:false, message:'არასწორი მოთხოვნა' }, 400);
+
+    const { username = '', password = '', role = 'viewer', customer_id = null } = body;
+
+    if (!username) return c.json({ ok:false, message:'username სავალდებულოა' }, 400);
+    if (!password) return c.json({ ok:false, message:'password სავალდებულოა' }, 400);
+    const roles = ['admin','technician','viewer','customer'];
+    if (!roles.includes(String(role))) return c.json({ ok:false, message:'არასწორი როლი' }, 400);
+
+    // username დუბლირების შემოწმება
+    const dupe = await c.env.DB.prepare(
+      `SELECT 1 FROM appusers WHERE username = ?`
+    ).bind(username).first();
+    if (dupe) return c.json({ ok:false, message:'ასეთი username უკვე არსებობს' }, 409);
+
+    const hash = hashSync(String(password), 10);
+
+    await c.env.DB.prepare(
+      `INSERT INTO appusers (username, password_hash, role, customer_id)
+       VALUES (?, ?, ?, ?)`
+    ).bind(username, hash, role, customer_id).run();
+
+    return c.json({ ok:true });
+  } catch (e:any) {
+    return c.json({ ok:false, message: e?.message || 'DB error' }, 500);
+  }
+});
+
+app.put('/api/appusers/:id', async (c) => {
+  try {
+    const id = c.req.param('id');
+    const body = await c.req.json().catch(()=>null) as any;
+    if (!/^\d+$/.test(String(id))) return c.json({ ok:false, message:'არასწორი ID' }, 400);
+    if (!body) return c.json({ ok:false, message:'არასწორი მოთხოვნა' }, 400);
+
+    const { username, role, customer_id, password } = body;
+
+    const exists = await c.env.DB.prepare(
+      `SELECT id FROM appusers WHERE id=?`
+    ).bind(id).first();
+    if (!exists) return c.json({ ok:false, message:'მომხმარებელი ვერ მოიძებნა' }, 404);
+
+    // თუ username იცვლება — დუბლირების კონტროლი
+    if (username) {
+      const dupe = await c.env.DB.prepare(
+        `SELECT id FROM appusers WHERE username=? AND id<>?`
+      ).bind(username, id).first();
+      if (dupe) return c.json({ ok:false, message:'ასეთი username უკვე არსებობს' }, 409);
+    }
+
+    // ავაგოთ დინამიკური UPDATE
+    const fields: string[] = [];
+    const binds: any[] = [];
+
+    if (username != null) { fields.push('username=?'); binds.push(username); }
+    if (role != null)     { fields.push('role=?');     binds.push(role); }
+    if (customer_id !== undefined) { fields.push('customer_id=?'); binds.push(customer_id); }
+    if (password) { fields.push('password_hash=?'); binds.push(hashSync(String(password),10)); }
+
+    if (fields.length === 0) return c.json({ ok:true }); // არაფერია შესაცვლელი
+
+    fields.push(`updated_at=datetime('now')`);
+
+    await c.env.DB.prepare(
+      `UPDATE appusers SET ${fields.join(', ')} WHERE id=?`
+    ).bind(...binds, id).run();
+
+    return c.json({ ok:true });
+  } catch (e:any) {
+    return c.json({ ok:false, message: e?.message || 'DB error' }, 500);
+  }
+});
+
+app.delete('/api/appusers/:id', async (c) => {
+  try {
+    const id = c.req.param('id');
+    if (!/^\d+$/.test(String(id))) return c.json({ ok:false, message:'არასწორი ID' }, 400);
+
+    const ex = await c.env.DB.prepare(
+      `SELECT id FROM appusers WHERE id=?`
+    ).bind(id).first();
+    if (!ex) return c.json({ ok:false, message:'მომხმარებელი ვერ მოიძებნა' }, 404);
+
+    await c.env.DB.prepare(`DELETE FROM appusers WHERE id=?`).bind(id).run();
+    return c.json({ ok:true });
+  } catch (e:any) {
+    return c.json({ ok:false, message: e?.message || 'DB error' }, 500);
+  }
+});
+
 
 /** Customers — Create */
 app.post('/api/customers', async (c) => {
@@ -455,6 +584,24 @@ app.delete('/api/files/:fid', async (c) => {
     return c.json({ ok:false, message: e?.message || 'Delete error' }, 500)
   }
 })
+
+/** AppUsers — List (GET /api/appusers) */
+app.get('/api/appusers', async (c) => {
+  try {
+    const { results } = await c.env.DB
+      .prepare(
+        `SELECT id, username, role, customer_id, created_at
+         FROM appusers
+         ORDER BY created_at DESC`
+      )
+      .all()
+
+    return c.json({ ok: true, items: results ?? [] })
+  } catch (e: any) {
+    return c.json({ ok:false, message: e?.message || 'DB error' }, 500)
+  }
+})
+
 
 
 
