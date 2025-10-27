@@ -30,11 +30,20 @@ function App() {
         throw new Error(data.message || 'ავტორიზაციის შეცდომა')
       }
 
-      localStorage.setItem('role', data.role)
-      setInfo(`შესვლა წარმატებულია. როლი: ${data.role}`)
+      // შევინახოთ როლი და საჭიროებისას customer_id
+      localStorage.setItem('role', data.role || '')
+      if (data.customer_id) {
+        localStorage.setItem('customer_id', String(data.customer_id))
+      }
 
-      // ავტორიდირექტი /admin-ზე
-      nav('/admin', { replace: true })
+      // გადაყვანა როლის მიხედვით:
+      if (data.role === 'admin') {
+        nav('/admin', { replace: true })
+      } else if (data.role === 'customer' && data.customer_id) {
+        nav(`/customer/${data.customer_id}`, { replace: true })
+      } else {
+        setInfo(`შესვლა: ${data.role}`)
+      }
     } catch (err) {
       setError(err.message)
     }
@@ -49,7 +58,7 @@ function App() {
         <form onSubmit={onSubmit} className="form">
           <label>იუზერნეიმი</label>
           <input
-            placeholder="მაგ: admin"
+            placeholder="მაგ: admin ან კლიენტის ident_code"
             value={username}
             onChange={(e)=>setUsername(e.target.value)}
           />

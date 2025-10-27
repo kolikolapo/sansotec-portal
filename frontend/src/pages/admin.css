@@ -22,3 +22,7 @@
 .side li{ background: var(--panel-2); border-radius: var(--radius); }
 .side li.active{ background: var(--accent); }
 .content{ padding: 20px; }
+
+.row-clickable:hover {
+  background: rgba(255,255,255,0.04);
+}
