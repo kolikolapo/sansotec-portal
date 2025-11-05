@@ -38,11 +38,15 @@ function App() {
 
       // გადაყვანა როლის მიხედვით:
       if (data.role === 'admin') {
-        nav('/admin', { replace: true })
-      } else if (data.role === 'customer' && data.customer_id) {
-        nav(`/customer/${data.customer_id}`, { replace: true })
-      } else {
-        setInfo(`შესვლა: ${data.role}`)
+      nav('/admin', { replace: true })
+    } else if (data.role === 'customer' && data.customer_id) {
+      nav(`/customer/${data.customer_id}`, { replace: true })
+    } else if (data.role === 'technician') {
+      nav('/admin', { replace: true })   // დროებით admin dashboard-ზე
+    } else if (data.role === 'viewer') {
+      nav('/admin', { replace: true })   // დროებით admin dashboard-ზე
+    } else {
+      setInfo(`შესვლა: ${data.role}`)
       }
     } catch (err) {
       setError(err.message)
