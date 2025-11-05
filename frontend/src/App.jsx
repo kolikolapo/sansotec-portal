@@ -7,27 +7,50 @@ function App() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
+  const [busy, setBusy] = useState(false)
   const nav = useNavigate()
 
   const onSubmit = async (e) => {
     e.preventDefault()
+    if (busy) return
     setError('')
     setInfo('')
 
-    if (!username || !password) {
+    const u = username.trim()
+    const p = password.trim()
+    if (!u || !p) {
       setError('გთხოვთ შეიყვანოთ იუზერნეიმი და პაროლი')
       return
     }
 
+    // უსაფრთხოდ ავაგოთ API base (უკანასკნელი '/’ მოვაშოროთ თუ არის)
+    const base = (import.meta.env.VITE_API_BASE || '').replace(/\/+$/, '')
+    if (!base) {
+      setError('API მისამართი არ არის გაწერილი (VITE_API_BASE)')
+      return
+    }
+
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/auth/login`, {
+      setBusy(true)
+      const res = await fetch(`${base}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username: u, password: p })
       })
-      const data = await res.json()
-      if (!res.ok || !data.ok) {
-        throw new Error(data.message || 'ავტორიზაციის შეცდომა')
+
+      // შესაძლოა API-მ საერთოდ არ დააბრუნოს სწორი JSON (ქსელური/CORS შეცდომები)
+      let data = null
+      try {
+        data = await res.json()
+      } catch {
+        data = null
+      }
+
+      if (!res.ok || !data || data.ok !== true) {
+        const msg =
+          (data && data.message) ||
+          `ავტორიზაციის შეცდომა (${res.status})`
+        throw new Error(msg)
       }
 
       // შევინახოთ როლი და საჭიროებისას customer_id
@@ -36,20 +59,25 @@ function App() {
         localStorage.setItem('customer_id', String(data.customer_id))
       }
 
-      // გადაყვანა როლის მიხედვით:
+      // გადაყვანა როლის მიხედვით
       if (data.role === 'admin') {
-      nav('/admin', { replace: true })
-    } else if (data.role === 'customer' && data.customer_id) {
-      nav(`/customer/${data.customer_id}`, { replace: true })
-    } else if (data.role === 'technician') {
-      nav('/admin', { replace: true })   // დროებით admin dashboard-ზე
-    } else if (data.role === 'viewer') {
-      nav('/admin', { replace: true })   // დროებით admin dashboard-ზე
-    } else {
-      setInfo(`შესვლა: ${data.role}`)
+        nav('/admin', { replace: true })
+      } else if (data.role === 'customer' && data.customer_id) {
+        nav(`/customer/${data.customer_id}`, { replace: true })
+      } else if (data.role === 'technician') {
+        // დროებით admin dashboard-ზე გადავიყვანოთ
+        nav('/admin', { replace: true })
+      } else if (data.role === 'viewer') {
+        // დროებით admin dashboard-ზე გადავიყვანოთ
+        nav('/admin', { replace: true })
+      } else {
+        // უცნობი როლი — ინფოს ვაჩვენებთ
+        setInfo(`შესვლა: ${data.role || 'უცნობი როლი'}`)
       }
     } catch (err) {
-      setError(err.message)
+      setError(err.message || 'ვერ მოხერხდა ავტორიზაცია')
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -65,6 +93,7 @@ function App() {
             placeholder="მაგ: admin ან კლიენტის ident_code"
             value={username}
             onChange={(e)=>setUsername(e.target.value)}
+            disabled={busy}
           />
 
           <label>პაროლი</label>
@@ -73,12 +102,15 @@ function App() {
             placeholder="••••••"
             value={password}
             onChange={(e)=>setPassword(e.target.value)}
+            disabled={busy}
           />
 
           {error && <div className="err">{error}</div>}
           {info && <div style={{ color: 'green', fontSize: 12, marginTop: 4 }}>{info}</div>}
 
-          <button type="submit">შესვლა</button>
+          <button type="submit" disabled={busy}>
+            {busy ? 'იტვირთება…' : 'შესვლა'}
+          </button>
         </form>
       </div>
     </div>
